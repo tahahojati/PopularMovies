@@ -1,0 +1,1 @@
+Please put your TMDB API KEYS INSIDE app/res/keys
