@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="tmdb_api_key_v3">Your v3 api key here</string>
+    <string name="tmdb_api_read_access_token_v4">Your v4 read access token here</string>
+    <string name="tmdb_api_endpoint">https://api.themoviedb.org/</string>
+</resources>
