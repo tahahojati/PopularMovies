@@ -78,7 +78,7 @@ class MovieHolder extends RecyclerView.ViewHolder{
     }
     public void bind(Movie movie){
         mMovie = movie;
-        Picasso.get().load(mMovie.getPosterPath())
+        Picasso.get().load(mMovie.getPosterPath(Movie.API_POSTER_SIZE_ORIGINAL))
                 .placeholder(R.drawable.ic_poster_placeholder)
                 .into(mPosterIv);
     }

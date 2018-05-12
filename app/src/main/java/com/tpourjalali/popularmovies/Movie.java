@@ -1,5 +1,7 @@
 package com.tpourjalali.popularmovies;
 
+import android.support.annotation.Nullable;
+
 public class Movie {
     private String mPosterPath;
     private Boolean mAdult;
@@ -14,6 +16,14 @@ public class Movie {
     private int mVoteCount;
     private Boolean mVideo;
     private Double mVoteAverage;
+    public static final String API_POSTER_BASE_URL = "http://image.tmdb.org/t/p/";
+    public static final String API_POSTER_SIZE_ORIGINAL = "original";
+    public static final String API_POSTER_SIZE_W92 = "w92";
+    public static final String API_POSTER_SIZE_W154 = "w154";
+    public static final String API_POSTER_SIZE_W185 = "w185";
+    public static final String API_POSTER_SIZE_W342 = "w342";
+    public static final String API_POSTER_SIZE_W500 = "w500";
+    public static final String API_POSTER_SIZE_W780 = "w780";
     public static final String JSON_KEY_POSTER_PATH = "poster_path";
     public static final String JSON_KEY_ADULT= "adult";
     public static final String JSON_KEY_OVERVIEW= "overview";
@@ -63,7 +73,11 @@ public class Movie {
     public String getPosterPath() {
         return mPosterPath;
     }
-
+    public String getPosterPath(@Nullable String posterSize){
+        if (posterSize == null)
+            posterSize = API_POSTER_SIZE_ORIGINAL;
+        return API_POSTER_BASE_URL + posterSize + mPosterPath;
+    }
     public void setPosterPath(String posterPath) {
         mPosterPath = posterPath;
     }
