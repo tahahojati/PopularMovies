@@ -36,7 +36,22 @@ public class MovieListActivity extends AppCompatActivity  implements LoaderManag
         mRecyclerView = findViewById(R.id.recycler_view);
         mAdapter = new MovieAdapter();
         mRecyclerView.setAdapter(mAdapter);
-        mRecyclerView.setLayoutManager(new GridLayoutManager(this, 6));
+        GridLayoutManager glm = new GridLayoutManager(this, 6);
+        mRecyclerView.setLayoutManager(glm);
+        glm.setSpanSizeLookup(new GridLayoutManager.SpanSizeLookup() {
+            @Override
+            public int getSpanSize(int position) {
+                switch (position){
+                    case 0:
+                        return 6;
+                    case 1:
+                    case 2:
+                        return 3;
+                    default:
+                        return 2;
+                }
+            }
+        });
     }
 
     @Override
