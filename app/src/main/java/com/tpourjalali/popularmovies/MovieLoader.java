@@ -24,15 +24,18 @@ import java.util.List;
 
 public class MovieLoader extends AsyncTaskLoader<List<Movie>> {
     private static final String TAG="MovieLoader";
+    private final String mSortby;
     public static final String TMDB_PATH_DISCOVER_MOVIE = "3/discover/movie";
     private static final String ID_DISCOVERY = "discovery_uri";
+    public static final String TMDB_KEY_SORTBY = "sort_by";
     private final String mTmdbApiKey;
     private static final String TMDB_KEY_PAGE = "page";
     private static final String TMDB_KEY_RELEASE_LTE = "release_date.lte";
     private static final String TMDB_URL = "https://api.themoviedb.org/";
     private static final String TMDB_KEY_API = "api_key";
-    public MovieLoader(Context activityContext, String tmdbApiKey){
+    public MovieLoader(Context activityContext, String tmdbApiKey, String sortby){
         super(activityContext);
+        mSortby = sortby;
         mTmdbApiKey = tmdbApiKey;
     }
     @Nullable
@@ -40,16 +43,16 @@ public class MovieLoader extends AsyncTaskLoader<List<Movie>> {
     public List<Movie> loadInBackground() {
         try {
             URL url = new URL(getUri(ID_DISCOVERY));
-            Log.d(TAG, "heres is the uri: "+getUri(ID_DISCOVERY));
+            //Log.d(TAG, "heres is the uri: "+getUri(ID_DISCOVERY));
             InputStream httpStream = url.openStream();
             int charachter = httpStream.read();
             ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
             while(charachter != -1){
-                Log.d(TAG, "reading stream ");
+                //Log.d(TAG, "reading stream ");
                 byteStream.write(charachter);
                 charachter = httpStream.read();
             }
-            Log.d(TAG, "tmdb response: "+byteStream.toString());
+            //Log.d(TAG, "tmdb response: "+byteStream.toString());
             return (List<Movie>)parseJSON(ID_DISCOVERY, byteStream.toString());
         } catch (MalformedURLException e) {
             Log.e(TAG, "TMDB url is malinformed: "+ getUri(ID_DISCOVERY), e);
@@ -95,6 +98,7 @@ public class MovieLoader extends AsyncTaskLoader<List<Movie>> {
                         .appendEncodedPath(TMDB_PATH_DISCOVER_MOVIE)
                         .appendQueryParameter(TMDB_KEY_API, mTmdbApiKey)
                         .appendQueryParameter(TMDB_KEY_PAGE, "1")
+                        .appendQueryParameter(TMDB_KEY_SORTBY, mSortby)
                         .appendQueryParameter(TMDB_KEY_RELEASE_LTE, today)
                         .build()
                         .toString();

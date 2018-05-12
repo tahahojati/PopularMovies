@@ -7,12 +7,13 @@ import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.support.v7.recyclerview.extensions.ListAdapter;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.text.Layout;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -24,10 +25,15 @@ import java.util.List;
 
 public class MovieListActivity extends AppCompatActivity  implements LoaderManager.LoaderCallbacks<List<Movie>>{
     public static final int LOAD_POPULAR_MOVIE_LIST = 10;
+    private static final String ARG_SORT_BY = "sort by";
     private static final String TAG="MovieListActivity";
+    private static final String SORT_POPULARITY = "popularity.desc";
+    private static final String SORT_RATING = "vote_average.desc";
     private String TMDB_API_KEY_V3;
     private RecyclerView mRecyclerView;
     private MovieAdapter mAdapter;
+    private String mSortingCriteria = SORT_POPULARITY;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -57,8 +63,56 @@ public class MovieListActivity extends AppCompatActivity  implements LoaderManag
     @Override
     protected void onResume() {
         super.onResume();
+        reloadMovies();
+    }
+    private void reloadMovies(){
+        Bundle args= new Bundle();
+        args.putString(ARG_SORT_BY, mSortingCriteria);
         LoaderManager lm = getSupportLoaderManager();
-        lm.restartLoader(LOAD_POPULAR_MOVIE_LIST, null, this).forceLoad();
+        lm.restartLoader(LOAD_POPULAR_MOVIE_LIST, args, this).forceLoad();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater mi = getMenuInflater();
+        mi.inflate(R.menu.movie_list_menu, menu);
+        switch (mSortingCriteria){
+            case SORT_RATING:
+                menu.findItem(R.id.menu_sort_rating).setChecked(true);
+                break;
+            case SORT_POPULARITY:
+            default:
+                mSortingCriteria = SORT_POPULARITY;
+                menu.findItem(R.id.menu_sort_popularity).setChecked(true);
+        }
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        Log.d(TAG, item.getTitle().toString());
+        item.getGroupId();
+        switch (item.getItemId()) {
+            case R.id.menu_sort_popularity:
+                item.setChecked(true);
+                setSortingCriteria(SORT_POPULARITY);
+            case R.id.menu_sort_rating:
+                item.setChecked(true);
+                setSortingCriteria(SORT_RATING);
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+    public void setSortingCriteria(String criteria) {
+        if(criteria == null )
+            criteria = SORT_POPULARITY;
+        if(criteria.equals(mSortingCriteria))
+            return;
+        else {
+            mSortingCriteria = criteria;
+            reloadMovies();
+        }
+
     }
 
     @NonNull
@@ -67,7 +121,7 @@ public class MovieListActivity extends AppCompatActivity  implements LoaderManag
         switch (id){
             case LOAD_POPULAR_MOVIE_LIST:
                 Log.d(TAG, "creating a new MovieLoader!");
-                return new MovieLoader(this, TMDB_API_KEY_V3);
+                return new MovieLoader(this, TMDB_API_KEY_V3, args.getString(ARG_SORT_BY));
             default:
                 throw new IllegalArgumentException("MovieLoader createLoader called with invalid id: "+id);
         }
