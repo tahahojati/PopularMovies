@@ -2,11 +2,16 @@ package com.tpourjalali.popularmovies;
 
 import android.support.annotation.Nullable;
 
-public class Movie {
+import java.io.Serializable;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
+public class Movie implements Serializable {
     private String mPosterPath;
     private Boolean mAdult;
     private String mOverview;
-    private String mReleaseDate;
+    private Date mReleaseDate;
     private long mId;
     private String mOriginalTitle;
     private String mOriginalLanguage;
@@ -55,8 +60,9 @@ public class Movie {
             mMovie.setOverview(s);
             return this;
         }
-        public Builder releaseDate(String s){
-            mMovie.setReleaseDate(s);
+        public Builder releaseDate(String format, String s) throws ParseException {
+            SimpleDateFormat sdf = new SimpleDateFormat(format);
+            mMovie.setReleaseDate(sdf.parse(s));
             return this;
         }
         public Builder voteAverage(Double d){
@@ -65,6 +71,11 @@ public class Movie {
         }
         public Builder id(int i){
             mMovie.setId(i);
+            return this;
+        }
+
+        public Builder originalLanguage(String s) {
+            mMovie.setOriginalLanguage(s);
             return this;
         }
     }
@@ -98,11 +109,15 @@ public class Movie {
         mOverview = overview;
     }
 
-    public String getReleaseDate() {
+    public Date getReleaseDate() {
         return mReleaseDate;
     }
+    public String getReleaseDate(String format){
+        SimpleDateFormat sdf = new SimpleDateFormat(format);
+        return sdf.format(mReleaseDate);
+    }
 
-    public void setReleaseDate(String releaseDate) {
+    public void setReleaseDate(Date releaseDate) {
         mReleaseDate = releaseDate;
     }
 

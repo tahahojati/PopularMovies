@@ -1,6 +1,7 @@
 package com.tpourjalali.popularmovies;
 
 import android.content.Context;
+import android.content.Intent;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.LoaderManager;
@@ -140,13 +141,24 @@ class MovieHolder extends RecyclerView.ViewHolder{
     private ImageView mHeartIv;
     private ImageView mPosterIv;
     private Movie mMovie;
-    public MovieHolder(View itemView) {
+    private Context mContext;
+    private MovieAdapter.PosterClickListener mPosterClickListener;
+    private MovieAdapter.FavoriteClickListener mFavoriteClickListener;
+    public MovieHolder(View itemView, MovieAdapter.PosterClickListener posterListener, MovieAdapter.FavoriteClickListener favoriteListener) {
         super(itemView);
+        mContext = itemView.getContext();
         mHeartIv = itemView.findViewById(R.id.heart_iv);
         mPosterIv = itemView.findViewById(R.id.poster_iv);
+        mPosterIv.setOnClickListener(posterListener);
+        mHeartIv.setOnClickListener(favoriteListener);
+        mFavoriteClickListener = favoriteListener;
+        mPosterClickListener = posterListener;
     }
-    public void bind(Movie movie){
+
+    public void bind(Movie movie) {
         mMovie = movie;
+        mPosterClickListener.setMovie(mMovie);
+        mFavoriteClickListener.setMovie(mMovie);
         Picasso.get().load(mMovie.getPosterPath(Movie.API_POSTER_SIZE_ORIGINAL))
                 .placeholder(R.drawable.ic_poster_placeholder)
                 .into(mPosterIv);
@@ -163,10 +175,10 @@ class MovieAdapter extends RecyclerView.Adapter<MovieHolder>{
     @NonNull
     @Override
     public MovieHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        LayoutInflater li = (LayoutInflater) parent.getContext()
-                .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        Context context = parent.getContext();
+        LayoutInflater li = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         View v = li.inflate(R.layout.movie_list_item, parent, false);
-        return new MovieHolder(v);
+        return new MovieHolder(v, new PosterClickListener(context), new FavoriteClickListener(context));
     }
 
     @Override
@@ -177,5 +189,40 @@ class MovieAdapter extends RecyclerView.Adapter<MovieHolder>{
     @Override
     public int getItemCount() {
         return mMovies.size();
+    }
+    public class PosterClickListener implements View.OnClickListener{
+        private Movie mMovie;
+        private Context mContext;
+
+        public PosterClickListener(Context context) {
+
+            mContext = context;
+        }
+
+        @Override
+        public void onClick(View v) {
+            Intent intent = MovieDetailActivity.newIntent(mContext, mMovie);
+            mContext.startActivity(intent);
+        }
+        public void setMovie(Movie movie) {
+            mMovie = movie;
+        }
+    }
+
+    public class FavoriteClickListener implements View.OnClickListener{
+        private Movie mMovie;
+        private Context mContext;
+
+        public FavoriteClickListener(Context context) {
+            mContext = context;
+        }
+
+        @Override
+        public void onClick(View v) {
+
+        }
+        public void setMovie(Movie movie) {
+            mMovie = movie;
+        }
     }
 }

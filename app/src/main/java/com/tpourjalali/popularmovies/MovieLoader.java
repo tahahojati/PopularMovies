@@ -6,6 +6,7 @@ import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.content.AsyncTaskLoader;
+import android.text.method.MovementMethod;
 import android.util.Log;
 
 import org.json.JSONArray;
@@ -17,6 +18,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -63,6 +65,7 @@ public class MovieLoader extends AsyncTaskLoader<List<Movie>> {
     }
 
     private Object parseJSON(String type_id, String s) {
+        Log.d(TAG, s);
         switch (type_id){
             case ID_DISCOVERY:
                 List<Movie> movieList = new ArrayList<>();
@@ -70,14 +73,19 @@ public class MovieLoader extends AsyncTaskLoader<List<Movie>> {
                     JSONArray jarr = new JSONObject(s).getJSONArray("results");
                     for(int i = 0; i < jarr.length(); ++i){
                         JSONObject jo = jarr.getJSONObject(i);
-                        movieList.add(new Movie.Builder()
+                        Movie.Builder mb = new Movie.Builder()
                                 .title(jo.optString(Movie.JSON_KEY_TITLE))
                                 .overview(jo.optString(Movie.JSON_KEY_OVERVIEW))
                                 .id(jo.optInt(Movie.JSON_KEY_ID))
+                                .originalLanguage(jo.optString(Movie.JSON_KEY_ORIGINALLANGUAGE))
                                 .posterPath(jo.optString(Movie.JSON_KEY_POSTER_PATH))
-                                .voteAverage(jo.optDouble(Movie.JSON_KEY_VOTE_AVERAGE))
-                                .build()
-                        );
+                                .voteAverage(jo.optDouble(Movie.JSON_KEY_VOTE_AVERAGE));
+                        try{
+                            mb.releaseDate("yyyy-mm-dd", jo.optString(Movie.JSON_KEY_RELEASEDATE));
+                        } catch (ParseException e) {
+                            Log.e(TAG, "could not parse release date string(require yyyy-MM-dd: "+ jo.optString(Movie.JSON_KEY_RELEASEDATE));
+                        }
+                        movieList.add(mb.build());
                     }
                 } catch (JSONException e) {
                     Log.e(TAG,"error parsing movie array json",e);
