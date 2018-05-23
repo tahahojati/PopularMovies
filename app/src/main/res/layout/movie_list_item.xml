@@ -10,6 +10,7 @@
         android:layout_height="wrap_content"
         android:layout_width="match_parent">
         <ImageView
+            android:transitionName="@string/transition_name_movie_poster"
             android:src="@drawable/ic_poster_placeholder"
             android:id="@+id/poster_iv"
             android:contentDescription="Movie poster"

@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.app.ActivityOptionsCompat;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
@@ -23,6 +24,7 @@ import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class MovieListActivity extends AppCompatActivity  implements LoaderManager.LoaderCallbacks<List<Movie>>{
     public static final int LOAD_POPULAR_MOVIE_LIST = 10;
@@ -136,15 +138,80 @@ public class MovieListActivity extends AppCompatActivity  implements LoaderManag
     public void onLoaderReset(@NonNull Loader loader) {
 
     }
+
+    private class MovieAdapter extends RecyclerView.Adapter<MovieHolder> {
+        private List<Movie> mMovies = new ArrayList<>();
+
+        public void setMovies(List<Movie> movies) {
+            if (movies != null) {
+                mMovies = movies;
+                notifyDataSetChanged();
+            }
+        }
+
+        @NonNull
+        @Override
+        public MovieHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            Context context = MovieListActivity.this;
+            LayoutInflater li = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+            View v = li.inflate(R.layout.movie_list_item, parent, false);
+            return new MovieHolder(v, new PosterClickListener(), new FavoriteClickListener());
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull MovieHolder holder, int position) {
+            holder.bind(mMovies.get(position));
+        }
+
+        @Override
+        public int getItemCount() {
+            return mMovies.size();
+        }
+    }
+    public class PosterClickListener implements View.OnClickListener{
+        private Movie mMovie;
+        private ImageView mSharedView;
+        @Override
+        public void onClick(View v) {
+            Intent intent = MovieDetailActivity.newIntent(MovieListActivity.this, mMovie);
+            if(mSharedView != null) {
+                ActivityOptionsCompat options =
+                        ActivityOptionsCompat.makeSceneTransitionAnimation(MovieListActivity.this,
+                                mSharedView, getString(R.string.transition_name_movie_poster));
+                startActivity(intent, options.toBundle());
+            } else {
+                startActivity(intent);
+            }
+        }
+        public void setSharedView(ImageView iv){
+            mSharedView = iv;
+        }
+        public void setMovie(Movie movie) {
+            mMovie = movie;
+        }
+    }
+
+    public class FavoriteClickListener implements View.OnClickListener{
+        private Movie mMovie;
+
+        @Override
+        public void onClick(View v) {
+
+        }
+        public void setMovie(Movie movie) {
+            mMovie = movie;
+        }
+    }
+
 }
 class MovieHolder extends RecyclerView.ViewHolder{
     private ImageView mHeartIv;
     private ImageView mPosterIv;
     private Movie mMovie;
     private Context mContext;
-    private MovieAdapter.PosterClickListener mPosterClickListener;
-    private MovieAdapter.FavoriteClickListener mFavoriteClickListener;
-    public MovieHolder(View itemView, MovieAdapter.PosterClickListener posterListener, MovieAdapter.FavoriteClickListener favoriteListener) {
+    private MovieListActivity.PosterClickListener mPosterClickListener;
+    private MovieListActivity.FavoriteClickListener mFavoriteClickListener;
+    public MovieHolder(View itemView, MovieListActivity.PosterClickListener posterListener, MovieListActivity.FavoriteClickListener favoriteListener) {
         super(itemView);
         mContext = itemView.getContext();
         mHeartIv = itemView.findViewById(R.id.heart_iv);
@@ -152,6 +219,8 @@ class MovieHolder extends RecyclerView.ViewHolder{
         mPosterIv.setOnClickListener(posterListener);
         mHeartIv.setOnClickListener(favoriteListener);
         mFavoriteClickListener = favoriteListener;
+        mPosterClickListener = posterListener;
+        mPosterClickListener.setSharedView(mPosterIv);
         mPosterClickListener = posterListener;
     }
 
@@ -162,67 +231,5 @@ class MovieHolder extends RecyclerView.ViewHolder{
         Picasso.get().load(mMovie.getPosterPath(Movie.API_POSTER_SIZE_ORIGINAL))
                 .placeholder(R.drawable.ic_poster_placeholder)
                 .into(mPosterIv);
-    }
-}
-class MovieAdapter extends RecyclerView.Adapter<MovieHolder>{
-    private List<Movie> mMovies = new ArrayList<>();
-    public void setMovies(List<Movie> movies){
-        if(movies != null) {
-            mMovies = movies;
-            notifyDataSetChanged();
-        }
-    }
-    @NonNull
-    @Override
-    public MovieHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        Context context = parent.getContext();
-        LayoutInflater li = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        View v = li.inflate(R.layout.movie_list_item, parent, false);
-        return new MovieHolder(v, new PosterClickListener(context), new FavoriteClickListener(context));
-    }
-
-    @Override
-    public void onBindViewHolder(@NonNull MovieHolder holder, int position) {
-        holder.bind(mMovies.get(position));
-    }
-
-    @Override
-    public int getItemCount() {
-        return mMovies.size();
-    }
-    public class PosterClickListener implements View.OnClickListener{
-        private Movie mMovie;
-        private Context mContext;
-
-        public PosterClickListener(Context context) {
-
-            mContext = context;
-        }
-
-        @Override
-        public void onClick(View v) {
-            Intent intent = MovieDetailActivity.newIntent(mContext, mMovie);
-            mContext.startActivity(intent);
-        }
-        public void setMovie(Movie movie) {
-            mMovie = movie;
-        }
-    }
-
-    public class FavoriteClickListener implements View.OnClickListener{
-        private Movie mMovie;
-        private Context mContext;
-
-        public FavoriteClickListener(Context context) {
-            mContext = context;
-        }
-
-        @Override
-        public void onClick(View v) {
-
-        }
-        public void setMovie(Movie movie) {
-            mMovie = movie;
-        }
     }
 }
