@@ -2,13 +2,13 @@ package com.tpourjalali.popularmovies;
 
 import android.content.Context;
 import android.content.Intent;
+import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityOptionsCompat;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -24,18 +24,15 @@ import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 public class MovieListActivity extends AppCompatActivity  implements LoaderManager.LoaderCallbacks<List<Movie>>{
     public static final int LOAD_POPULAR_MOVIE_LIST = 10;
     private static final String ARG_SORT_BY = "sort by";
-    private static final String TAG="MovieListActivity";
-    private static final String SORT_POPULARITY = "popularity.desc";
-    private static final String SORT_RATING = "vote_average.desc";
+    private static final String TAG = "MovieListActivity";
     private String TMDB_API_KEY_V3;
     private RecyclerView mRecyclerView;
     private MovieAdapter mAdapter;
-    private String mSortingCriteria = SORT_POPULARITY;
+    private String mSortingCriteria = MovieLoader.TMDB_PATH_POPULAR_MOVIE;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -80,12 +77,12 @@ public class MovieListActivity extends AppCompatActivity  implements LoaderManag
         MenuInflater mi = getMenuInflater();
         mi.inflate(R.menu.movie_list_menu, menu);
         switch (mSortingCriteria){
-            case SORT_RATING:
+            case MovieLoader.TMDB_PATH_TOP_RATED_MOVIE:
                 menu.findItem(R.id.menu_sort_rating).setChecked(true);
                 break;
-            case SORT_POPULARITY:
+            case MovieLoader.TMDB_PATH_POPULAR_MOVIE:
             default:
-                mSortingCriteria = SORT_POPULARITY;
+                mSortingCriteria = MovieLoader.TMDB_PATH_POPULAR_MOVIE;
                 menu.findItem(R.id.menu_sort_popularity).setChecked(true);
         }
         return true;
@@ -98,17 +95,17 @@ public class MovieListActivity extends AppCompatActivity  implements LoaderManag
         switch (item.getItemId()) {
             case R.id.menu_sort_popularity:
                 item.setChecked(true);
-                setSortingCriteria(SORT_POPULARITY);
+                setSortingCriteria(MovieLoader.TMDB_PATH_POPULAR_MOVIE);
             case R.id.menu_sort_rating:
                 item.setChecked(true);
-                setSortingCriteria(SORT_RATING);
+                setSortingCriteria(MovieLoader.TMDB_PATH_TOP_RATED_MOVIE);
             default:
                 return super.onOptionsItemSelected(item);
         }
     }
     public void setSortingCriteria(String criteria) {
         if(criteria == null )
-            criteria = SORT_POPULARITY;
+            criteria = MovieLoader.TMDB_PATH_POPULAR_MOVIE;
         if(criteria.equals(mSortingCriteria))
             return;
         else {
