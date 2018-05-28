@@ -170,7 +170,7 @@ public class MovieListActivity extends AppCompatActivity  implements LoaderManag
         private ImageView mSharedView;
         @Override
         public void onClick(View v) {
-            Intent intent = MovieDetailActivity.newIntent(MovieListActivity.this, mMovie);
+            Intent intent = MovieDetailActivity.newIntent(MovieListActivity.this, mMovie, mMovie.getId());
             if(mSharedView != null) {
                 ActivityOptionsCompat options =
                         ActivityOptionsCompat.makeSceneTransitionAnimation(MovieListActivity.this,

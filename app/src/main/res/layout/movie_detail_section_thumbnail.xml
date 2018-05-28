@@ -43,7 +43,7 @@
         app:layout_constraintStart_toStartOf="@id/movie_thumbnail_iv"
         app:layout_constraintTop_toBottomOf="@id/movie_star_iv"
         android:id="@+id/movie_score_tv"
-        style="@style/MovieDetail.title"
+        style="@style/MovieDetail.vote_average"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         tools:text="7.3" />
