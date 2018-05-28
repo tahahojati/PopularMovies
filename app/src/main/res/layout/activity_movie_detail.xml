@@ -1,104 +1,83 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<!--
+    TODO:
+    1- Style the screen
+    2- Connect to activity
+    3-
+-->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_margin="0dp"
-    android:padding="0dp"
     xmlns:tools="http://schemas.android.com/tools"
-    android:layout_height="match_parent"
+    android:fillViewport="true"
+    android:layout_height="wrap_content"
     android:layout_width="match_parent">
-    <ImageView
-        android:transitionName="@string/transition_name_movie_poster"
-        android:layout_margin="0dp"
-        android:scaleType="centerCrop"
-        android:adjustViewBounds="false"
-        android:tintMode="src_over"
-        android:tint="@color/seethrough_light_grey"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:id="@+id/movie_background_iv"/>
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="15dp"
-        tools:context=".MovieDetailActivity">
-
-        <RelativeLayout
+        >
+        <ImageView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
-
-            <TextView
-                android:id="@+id/movie_score_tv"
-                style="@style/MovieDetail.title"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignParentStart="true"
-                android:layout_centerVertical="true"
-                android:layout_marginEnd="20dp"
-                tools:text="7.3" />
-
-            <TextView
-                android:layout_toEndOf="@id/movie_score_tv"
-                android:id="@+id/movie_title_tv"
-                android:layout_alignParentTop="true"
-                style="@style/MovieDetail.title"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                tools:text="Black Panther" />
-
-            <TextView
-                android:id="@+id/movie_subtitle_tv"
-                style="@style/MovieDetail.subtitle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_below="@id/movie_title_tv"
-                android:layout_marginTop="0dp"
-                android:layout_toEndOf="@id/movie_score_tv"
-                tools:text="Black Panther" />
-        </RelativeLayout>
-
+            tools:layout_height="200dp"
+            tools:background="@android:color/holo_red_dark"
+            android:id="@+id/movie_backdrop_iv"/>
+        <TextView
+            android:id="@+id/movie_title_tv"
+            style="@style/MovieDetail.title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            tools:text="Black Panther" />
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            style="@style/MovieDetail.subtitle"
+            android:id="@+id/movie_details_tv"/>
         <View
+            style="@style/horizontalDivider" />
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="@android:color/white"/>
-
-        <RelativeLayout
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1">
-
-            <TextView
-                android:id="@+id/movie_date_tv"
-                style="@style/MovieDetail.subtitle"
-                android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="15dp"
+            tools:context=".MovieDetailActivity">
+            <include
+                layout="@layout/movie_detail_section_thumbnail"
                 android:layout_height="wrap_content"
-                android:layout_alignParentStart="true"
-                android:layout_alignParentTop="true"
-                tools:text="2018 February 2013" />
-
-            <TextView
-                android:id="@+id/movie_language_tv"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignParentEnd="true"
-                android:layout_alignParentTop="true"
-                style="@style/MovieDetail.subtitle"
-                tools:text="EN" />
-
+                android:layout_width="0dp"
+                android:layout_weight="2"
+                />
             <TextView
                 android:background="@color/opaque_grey"
                 android:layout_marginStart="8dp"
                 android:layout_marginEnd="8dp"
+                android:layout_width="0dp"
+                android:layout_weight="3"
                 android:padding="10dp"
-                android:layout_centerHorizontal="true"
-                android:layout_alignParentBottom="true"
                 android:id="@+id/movie_description_tv"
                 style="@style/MovieDetail.Description"
-                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 tools:text="King returns home from America to the reclusive, technologically advanced African nation of Wakanda to serve as his country's new leader. However, soon finds that he is challenged for the throne by factions within his own country as wwell as withough. " />
-        </RelativeLayout>
+        </LinearLayout>
+        <View
+            style="@style/horizontalDivider"/>
+        <android.support.v7.widget.RecyclerView
+            tools:listitem="@layout/movie_trailer_list_item"
+            android:id="@+id/movie_trailers_rv"
+            android:layout_width="match_parent"
+            tools:layoutManager="android.support.v7.widget.LinearLayoutManager"
+            tools:orientation="horizontal"
+            tools:scrollbars="horizontal"
+            tools:itemCount="3"
+            android:layout_height="@dimen/movie_trailers_list_height"/>
+        <View
+            style="@style/horizontalDivider"/>
+        <android.support.v4.view.ViewPager
+            tools:listitem="@layout/movie_review_list_item"
+            android:id="@+id/movie_reviews_vp"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/movie_reviews_height"/>
 
     </LinearLayout>
-</FrameLayout>
+</ScrollView>

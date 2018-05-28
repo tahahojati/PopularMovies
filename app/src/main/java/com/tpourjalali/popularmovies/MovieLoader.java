@@ -6,6 +6,7 @@ import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.content.AsyncTaskLoader;
+import android.text.TextUtils;
 import android.util.Log;
 
 import org.json.JSONArray;
@@ -28,15 +29,9 @@ import java.util.Objects;
 public class MovieLoader extends AsyncTaskLoader<List<Movie>> {
     private static final String TAG="MovieLoader";
     private final String mSortPath;
-    public static final String TMDB_PATH_POPULAR_MOVIE = "3/movie/popular";
-    public static final String TMDB_PATH_TOP_RATED_MOVIE = "3/movie/top_rated";
     private static final String ID_DISCOVERY = "discovery_uri";
-    public static final String TMDB_KEY_SORTBY = "sort_by";
     private final String mTmdbApiKey;
-    private static final String TMDB_KEY_PAGE = "page";
-    private static final String TMDB_KEY_RELEASE_LTE = "release_date.lte";
-    private static final String TMDB_URL = "https://api.themoviedb.org/";
-    private static final String TMDB_KEY_API = "api_key";
+
     public MovieLoader(Context activityContext, String tmdbApiKey, String sortPath){
         super(activityContext);
         mSortPath = sortPath;
@@ -76,17 +71,7 @@ public class MovieLoader extends AsyncTaskLoader<List<Movie>> {
                     for(int i = 0; i < jarr.length(); ++i){
                         JSONObject jo = jarr.getJSONObject(i);
                         Movie.Builder mb = new Movie.Builder()
-                                .title(jo.optString(Movie.JSON_KEY_TITLE))
-                                .overview(jo.optString(Movie.JSON_KEY_OVERVIEW))
-                                .id(jo.optInt(Movie.JSON_KEY_ID))
-                                .originalLanguage(jo.optString(Movie.JSON_KEY_ORIGINALLANGUAGE))
-                                .posterPath(jo.optString(Movie.JSON_KEY_POSTER_PATH))
-                                .voteAverage(jo.optDouble(Movie.JSON_KEY_VOTE_AVERAGE));
-                        try{
-                            mb.releaseDate("yyyy-mm-dd", jo.optString(Movie.JSON_KEY_RELEASEDATE));
-                        } catch (ParseException e) {
-                            Log.e(TAG, "could not parse release date string(require yyyy-MM-dd: "+ jo.optString(Movie.JSON_KEY_RELEASEDATE));
-                        }
+                            .setFromTMDBMovieDetailJson(jo);
                         movieList.add(mb.build());
                     }
                 } catch (JSONException e) {
@@ -104,12 +89,11 @@ public class MovieLoader extends AsyncTaskLoader<List<Movie>> {
                 Objects.requireNonNull(path);
                 String today = new SimpleDateFormat("yyyy-MM-dd")
                         .format(Calendar.getInstance().getTime());
-                return Uri.parse(TMDB_URL)
+                return Uri.parse(Movie.TMDB_URL)
                         .buildUpon()
                         .appendEncodedPath(path)
-                        .appendQueryParameter(TMDB_KEY_API, mTmdbApiKey)
-                        .appendQueryParameter(TMDB_KEY_PAGE, "1")
-                        .appendQueryParameter(TMDB_KEY_RELEASE_LTE, today)
+                        .appendQueryParameter(Movie.TMDB_KEY_API, mTmdbApiKey)
+                        .appendQueryParameter(Movie.TMDB_KEY_RELEASE_LTE, today)
                         .build()
                         .toString();
             default:

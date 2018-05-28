@@ -10,4 +10,6 @@
     <dimen name="detail_poster_width">130dp</dimen>
     <dimen name="detail_margin">16dp</dimen>
     <dimen name="detail_text_size">16sp</dimen>
+    <dimen name="movie_trailers_list_height">150dp</dimen>
+    <dimen name="movie_reviews_height">300dp</dimen>
 </resources>

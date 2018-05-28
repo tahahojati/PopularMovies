@@ -1,8 +1,11 @@
 <resources>
 
     <!-- Base application theme. -->
-    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+    <style name="AppTheme" parent="Theme.AppCompat.DayNight.DarkActionBar">
         <!-- Customize your theme here. -->
+        <item name="android:windowBackground">@drawable/marble_background</item>
+        <item name="android:colorBackground">@android:color/holo_blue_light</item>
+        <item name="android:colorForeground">@android:color/holo_orange_dark</item>
         <item name="android:windowContentTransitions">true</item>
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
@@ -24,6 +27,17 @@
 
     <style name="MovieDetail.title">
         <item name="android:textSize">24sp</item>
+    </style>
+
+    <style name="horizontalDivider" parent="AppTheme">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">1dp</item>
+        <item name="android:layout_marginTop">8dp</item>
+        <item name="android:layout_marginBottom">8dp</item>
+        <item name="android:background">@android:color/white</item>
+    </style>
+    <style name="MovieDetail.vote_)count">
+
     </style>
 
 </resources>

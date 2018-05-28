@@ -5,4 +5,6 @@
     <color name="colorAccent">#FF4081</color>
     <color name="opaque_grey">#dc2b292a</color>
     <color name="seethrough_light_grey" >#792b292a</color>
+    <color name="foreground_material_dark_1">#140e0e</color>
+    <color name="color_ic_favorite_star">#fdd25a</color>
 </resources>
