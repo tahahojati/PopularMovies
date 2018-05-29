@@ -2,8 +2,6 @@ package com.tpourjalali.popularmovies;
 
 import android.content.Context;
 import android.net.Uri;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.v4.content.AsyncTaskLoader;
 import android.util.Log;
 
@@ -11,18 +9,13 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.MalformedURLException;
-import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
-import java.util.Objects;
 
 public class TMDB {
     private static final String TAG = "TMDB CLASS";
@@ -69,8 +62,15 @@ public class TMDB {
     public static final int MOVIE_LIST_LOADER_SORT_RATING = 234;
 
     //END OF PUBLIC CONSTANTS
+    private static String sTMDBApiKey = null;
 
-
+    public static boolean initialize(String v3_api_key){
+        sTMDBApiKey = v3_api_key;
+        if(v3_api_key == null){
+            return false;
+        }
+        return true;
+    }
 
     public static AsyncTaskLoader<List<Movie>> createMovieListLoader(final int sorting_key, final Context context){
         return new AsyncTaskLoader<List<Movie>>(context) {
@@ -108,7 +108,7 @@ public class TMDB {
                 return Uri.parse(TMDB.TMDB_URL)
                         .buildUpon()
                         .appendEncodedPath(path)
-                        .appendQueryParameter(TMDB.TMDB_KEY_API, getContext().getString(R.string.tmdb_api_key_v3))
+                        .appendQueryParameter(TMDB.TMDB_KEY_API, sTMDBApiKey)
                         .appendQueryParameter(TMDB.TMDB_KEY_RELEASE_LTE, today)
                         .build()
                         .toString();
@@ -136,7 +136,7 @@ public class TMDB {
                             Uri.parse(TMDB.TMDB_URL)
                                     .buildUpon()
                                     .appendEncodedPath(TMDB.TMDB_PATH_GET_MOVIE.replace("?", Long.toString(movie_id)))
-                                    .appendQueryParameter(TMDB.TMDB_KEY_API, getContext().getString(R.string.tmdb_api_key_v3)).toString();
+                                    .appendQueryParameter(TMDB.TMDB_KEY_API, sTMDBApiKey).toString();
                     return new Movie.Builder().setFromTMDBMovieDetailJson(NetUtils.openPage(url)).build();
                 } catch (MalformedURLException e) {
                     Log.e("Movie Detail Loader", "Could not parse Url", e);
@@ -181,7 +181,7 @@ public class TMDB {
                                             .replace("?", Long.toString(movie_id)))
                             .appendQueryParameter(
                                     TMDB.TMDB_KEY_API,
-                                    getContext().getString(R.string.tmdb_api_key_v3)
+                                    sTMDBApiKey
                             )
                             .appendQueryParameter(TMDB.TMDB_KEY_LANGUAGE, Locale.getDefault().getDisplayLanguage())
                             .toString();
@@ -232,7 +232,7 @@ public class TMDB {
                                             .replace("?", Long.toString(movie_id)))
                             .appendQueryParameter(
                                     TMDB.TMDB_KEY_API,
-                                    getContext().getString(R.string.tmdb_api_key_v3)
+                                    sTMDBApiKey
                             )
                             .appendQueryParameter(TMDB.TMDB_KEY_LANGUAGE, Locale.getDefault().getDisplayLanguage())
                             .toString();

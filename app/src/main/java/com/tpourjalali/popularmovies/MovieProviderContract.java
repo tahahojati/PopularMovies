@@ -16,7 +16,11 @@ public final class MovieProviderContract {
     public static final String AUTHORITY = "com.tpourjalali.popularmovies";
     public static final Uri BASE_CONTENT_URI = Uri.parse("content://"+AUTHORITY);
     public final static class MovieEntry implements BaseColumns{
-        public static final String TABLE_NAME                   = "movies";
+        public static final String TABLE_NAME                   = "movie";
+        public static final String POPULAR_MOVIES_PATH          = "popular";
+        public static final String TOP_MOVIES_PATH              = "top_rated";
+        public static final String MOVIE_ID_PATH                = "id";
+        //End of intenal constants
         public static final String COLUMN_POSTER_PATH			= "poster_path";
         public static final String COLUMN_ADULT					= "adult";
         public static final String COLUMN_OVERVIEW				= "overview";
@@ -41,8 +45,22 @@ public final class MovieProviderContract {
         public static final Uri CONTENT_URI = BASE_CONTENT_URI.buildUpon().appendPath(TABLE_NAME).build();
         public static final String CONTENT_DIR_TYPE = ContentResolver.CURSOR_DIR_BASE_TYPE + CONTENT_URI.getEncodedPath();
         public static final String CONTENT_ITEM_TYPE = ContentResolver.CURSOR_ITEM_BASE_TYPE + CONTENT_URI.getEncodedPath();
+        public static final Uri POPULAR_MOVIES_URI = CONTENT_URI
+                .buildUpon()
+                .appendPath(POPULAR_MOVIES_PATH)
+                .build();
+        public static final Uri TOPRATED_MOVIES_URI = CONTENT_URI
+                .buildUpon()
+                .appendPath(TOP_MOVIES_PATH)
+                .build();
+        public static final Uri SINGLE_MOVIE_URI = CONTENT_URI
+                .buildUpon()
+                .appendPath(MOVIE_ID_PATH)
+                .build();
         static {
             Log.d("Movies Contract", CONTENT_DIR_TYPE+"\t"+CONTENT_ITEM_TYPE);
         }
+
+        //End of Constants
     }
 }
