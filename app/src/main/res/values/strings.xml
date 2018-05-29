@@ -4,4 +4,7 @@
     <string name="sort_criteria_rating">Sort by rating</string>
     <string name="transition_name_movie_poster">movie_poster</string>
     <string name="movie_subtitle_details">"%tY   %dh%dmin   %s   %s"</string>
+    <string name="movie_detail_section_header_trailers">Videos</string>
+    <string name="movie_detail_section_header_reviews">Reviews</string>
+    <string name="movie_detail_review_author">- %s</string>
 </resources>

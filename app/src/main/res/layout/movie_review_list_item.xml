@@ -1,6 +1,41 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent"
-    android:layout_height="match_parent">
-
-</android.support.constraint.ConstraintLayout>
+<android.support.v7.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    app:cardElevation="10dp"
+    app:cardBackgroundColor="@color/grey_900"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_margin="30dp">
+    <android.support.constraint.ConstraintLayout
+        android:layout_width="match_parent"
+        android:padding="20dp"
+        android:layout_height="match_parent">
+        <ScrollView
+            android:nestedScrollingEnabled="true"
+            android:scrollbarAlwaysDrawVerticalTrack="true"
+            android:scrollbars="vertical"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toTopOf="@+id/review_author_tv"
+            android:id="@+id/scroll_view"
+            android:layout_width="match_parent"
+            app:layout_constrainedHeight="true"
+            android:layout_height="wrap_content">
+            <TextView
+                style="@style/MovieDetail.Review.Content"
+                android:id="@+id/review_content_tv"
+                android:layout_width="match_parent"
+                tools:text="This movie sucked!"
+                android:layout_height="wrap_content" />
+        </ScrollView>
+    <TextView
+            style="@style/MovieDetail.Review.Author"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            tools:text="- James Madison"
+            android:id="@id/review_author_tv"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+    </android.support.constraint.ConstraintLayout>
+</android.support.v7.widget.CardView>

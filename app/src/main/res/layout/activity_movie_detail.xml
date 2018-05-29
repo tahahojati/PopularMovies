@@ -62,8 +62,13 @@
         </LinearLayout>
         <View
             style="@style/horizontalDivider"/>
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            style="@style/MovieDetail.section_header"
+            android:text="@string/movie_detail_section_header_trailers"/>
         <android.support.v7.widget.RecyclerView
-            tools:listitem="@layout/movie_trailer_list_item"
+            tools:listitem="@layout/movie_trailer_item_view"
             android:id="@+id/movie_trailers_rv"
             android:layout_width="match_parent"
             tools:layoutManager="android.support.v7.widget.LinearLayoutManager"
@@ -73,10 +78,18 @@
             android:layout_height="@dimen/movie_trailers_list_height"/>
         <View
             style="@style/horizontalDivider"/>
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            style="@style/MovieDetail.section_header"
+            android:text="@string/movie_detail_section_header_reviews"/>
         <android.support.v4.view.ViewPager
             tools:listitem="@layout/movie_review_list_item"
             android:id="@+id/movie_reviews_vp"
             android:layout_width="match_parent"
+            android:layout_marginEnd="10dp"
+            android:layout_marginStart="10dp"
+            android:layout_marginBottom="20dp"
             android:layout_height="@dimen/movie_reviews_height"/>
 
     </LinearLayout>

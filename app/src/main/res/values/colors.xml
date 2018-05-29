@@ -7,4 +7,16 @@
     <color name="seethrough_light_grey" >#792b292a</color>
     <color name="foreground_material_dark_1">#140e0e</color>
     <color name="color_ic_favorite_star">#fdd25a</color>
+
+
+    <color name="grey_900">#212121</color>
+    <color name="grey_800">#424242</color>
+    <color name="grey_700">#616161</color>
+    <color name="grey_600">#757575</color>
+    <color name="grey_500">#9e9e9e</color>
+    <color name="grey_400">#bdbdbd</color>
+    <color name="grey_300">#e0e0e0</color>
+    <color name="grey_200">#eeeeee</color>
+    <color name="grey_100">#f5f5f5</color>
+    <color name="grey_50">#fafafa</color>
 </resources>

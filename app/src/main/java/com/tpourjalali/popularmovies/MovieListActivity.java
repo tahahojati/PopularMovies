@@ -1,5 +1,6 @@
 package com.tpourjalali.popularmovies;
 
+import android.content.AsyncTaskLoader;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -32,7 +33,7 @@ public class MovieListActivity extends AppCompatActivity  implements LoaderManag
     private String TMDB_API_KEY_V3;
     private RecyclerView mRecyclerView;
     private MovieAdapter mAdapter;
-    private String mSortingCriteria = Movie.TMDB_PATH_POPULAR_MOVIE;
+    private int mSortingCriteria = TMDB.MOVIE_LIST_LOADER_SORT_POPULAR;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,7 +68,7 @@ public class MovieListActivity extends AppCompatActivity  implements LoaderManag
     }
     private void reloadMovies(){
         Bundle args= new Bundle();
-        args.putString(ARG_SORT_BY, mSortingCriteria);
+        args.putInt(ARG_SORT_BY, mSortingCriteria);
         LoaderManager lm = getSupportLoaderManager();
         lm.restartLoader(LOAD_POPULAR_MOVIE_LIST, args, this).forceLoad();
     }
@@ -77,12 +78,12 @@ public class MovieListActivity extends AppCompatActivity  implements LoaderManag
         MenuInflater mi = getMenuInflater();
         mi.inflate(R.menu.movie_list_menu, menu);
         switch (mSortingCriteria){
-            case Movie.TMDB_PATH_TOP_RATED_MOVIE:
+            case TMDB.MOVIE_LIST_LOADER_SORT_RATING:
                 menu.findItem(R.id.menu_sort_rating).setChecked(true);
                 break;
-            case Movie.TMDB_PATH_POPULAR_MOVIE:
+            case TMDB.MOVIE_LIST_LOADER_SORT_POPULAR:
             default:
-                mSortingCriteria = Movie.TMDB_PATH_POPULAR_MOVIE;
+                mSortingCriteria = TMDB.MOVIE_LIST_LOADER_SORT_POPULAR;
                 menu.findItem(R.id.menu_sort_popularity).setChecked(true);
         }
         return true;
@@ -95,18 +96,18 @@ public class MovieListActivity extends AppCompatActivity  implements LoaderManag
         switch (item.getItemId()) {
             case R.id.menu_sort_popularity:
                 item.setChecked(true);
-                setSortingCriteria(Movie.TMDB_PATH_POPULAR_MOVIE);
+                setSortingCriteria(TMDB.MOVIE_LIST_LOADER_SORT_POPULAR);
             case R.id.menu_sort_rating:
                 item.setChecked(true);
-                setSortingCriteria(Movie.TMDB_PATH_TOP_RATED_MOVIE);
+                setSortingCriteria(TMDB.MOVIE_LIST_LOADER_SORT_RATING);
             default:
                 return super.onOptionsItemSelected(item);
         }
     }
-    public void setSortingCriteria(String criteria) {
+    private void setSortingCriteria(Integer criteria) {
         if(criteria == null )
-            criteria = Movie.TMDB_PATH_POPULAR_MOVIE;
-        if(criteria.equals(mSortingCriteria))
+            criteria = TMDB.MOVIE_LIST_LOADER_SORT_POPULAR;
+        if(criteria == mSortingCriteria)
             return;
         else {
             mSortingCriteria = criteria;
@@ -117,15 +118,11 @@ public class MovieListActivity extends AppCompatActivity  implements LoaderManag
 
     @NonNull
     @Override
-    public Loader onCreateLoader(int id, @Nullable Bundle args) {
-        switch (id){
-            case LOAD_POPULAR_MOVIE_LIST:
-                Log.d(TAG, "creating a new MovieLoader!");
-                return new MovieLoader(this, TMDB_API_KEY_V3, args.getString(ARG_SORT_BY));
-            default:
-                throw new IllegalArgumentException("MovieLoader createLoader called with invalid id: "+id);
-        }
+    public Loader<List<Movie>> onCreateLoader(int id, @Nullable Bundle args) {
+        Log.d(TAG, "creating a new MovieLoader!");
+        return TMDB.createMovieListLoader(mSortingCriteria, MovieListActivity.this);
     }
+
     @Override
     public void onLoadFinished(@NonNull Loader<List<Movie>> loader, List<Movie> data) {
         mAdapter.setMovies(data);
@@ -226,9 +223,9 @@ class MovieHolder extends RecyclerView.ViewHolder{
         mMovie = movie;
         mPosterClickListener.setMovie(mMovie);
         mFavoriteClickListener.setMovie(mMovie);
-        Log.d(TAG, "url: "+ mMovie.getFullImagePath(Movie.API_POSTER_SIZE_ORIGINAL, null));
+        Log.d(TAG, "url: "+ mMovie.getFullImagePath(TMDB.API_POSTER_SIZE_ORIGINAL, null));
         Glide.with(itemView.getContext())
-                .load(mMovie.getFullImagePath(Movie.API_POSTER_SIZE_ORIGINAL, null))
+                .load(mMovie.getFullImagePath(TMDB.API_POSTER_SIZE_ORIGINAL, null))
 //                .placeholder(R.drawable.ic_poster_placeholder)
                 .into(mPosterIv);
     }
