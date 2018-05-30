@@ -33,7 +33,7 @@ public class MovieListActivity extends AppCompatActivity  implements LoaderManag
     private String TMDB_API_KEY_V3;
     private RecyclerView mRecyclerView;
     private MovieAdapter mAdapter;
-    private int mSortingCriteria = TMDB.MOVIE_LIST_LOADER_SORT_POPULAR;
+    private String mSortingCriteria = TMDB.TMDB_PATH_POPULAR_MOVIE;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,7 +68,7 @@ public class MovieListActivity extends AppCompatActivity  implements LoaderManag
     }
     private void reloadMovies(){
         Bundle args= new Bundle();
-        args.putInt(ARG_SORT_BY, mSortingCriteria);
+        args.putString(ARG_SORT_BY, mSortingCriteria);
         LoaderManager lm = getSupportLoaderManager();
         lm.restartLoader(LOAD_POPULAR_MOVIE_LIST, args, this).forceLoad();
     }
@@ -78,12 +78,12 @@ public class MovieListActivity extends AppCompatActivity  implements LoaderManag
         MenuInflater mi = getMenuInflater();
         mi.inflate(R.menu.movie_list_menu, menu);
         switch (mSortingCriteria){
-            case TMDB.MOVIE_LIST_LOADER_SORT_RATING:
+            case TMDB.TMDB_PATH_TOP_RATED_MOVIE:
                 menu.findItem(R.id.menu_sort_rating).setChecked(true);
                 break;
-            case TMDB.MOVIE_LIST_LOADER_SORT_POPULAR:
+            case TMDB.TMDB_PATH_POPULAR_MOVIE:
             default:
-                mSortingCriteria = TMDB.MOVIE_LIST_LOADER_SORT_POPULAR;
+                mSortingCriteria = TMDB.TMDB_PATH_POPULAR_MOVIE;
                 menu.findItem(R.id.menu_sort_popularity).setChecked(true);
         }
         return true;
@@ -96,17 +96,17 @@ public class MovieListActivity extends AppCompatActivity  implements LoaderManag
         switch (item.getItemId()) {
             case R.id.menu_sort_popularity:
                 item.setChecked(true);
-                setSortingCriteria(TMDB.MOVIE_LIST_LOADER_SORT_POPULAR);
+                setSortingCriteria(TMDB.TMDB_PATH_POPULAR_MOVIE);
             case R.id.menu_sort_rating:
                 item.setChecked(true);
-                setSortingCriteria(TMDB.MOVIE_LIST_LOADER_SORT_RATING);
+                setSortingCriteria(TMDB.TMDB_PATH_TOP_RATED_MOVIE);
             default:
                 return super.onOptionsItemSelected(item);
         }
     }
-    private void setSortingCriteria(Integer criteria) {
+    private void setSortingCriteria(String criteria) {
         if(criteria == null )
-            criteria = TMDB.MOVIE_LIST_LOADER_SORT_POPULAR;
+            criteria = TMDB.TMDB_PATH_POPULAR_MOVIE;
         if(criteria == mSortingCriteria)
             return;
         else {

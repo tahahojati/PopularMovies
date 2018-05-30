@@ -49,8 +49,24 @@ public class MovieProvider extends ContentProvider {
     @Override
     public Cursor query(Uri uri, String[] projection, String selection,
                         String[] selectionArgs, String sortOrder) {
-        // TODO: Implement this to handle query requests from clients.
-        throw new UnsupportedOperationException("Not yet implemented");
+        switch (sUriMatcher.match(uri)){
+            case CODE_POPULAR_MOVIES:
+
+                break;
+            case CODE_TOPRATED_MOVIES:
+
+            case CODE_SINGLE_MOVIE:
+
+            case CODE_Review_FOR_MOVIE:
+
+            case CODE_TRAILERS_FOR_MOVIE:
+
+            case CODE_IMAGE:
+
+            default:
+                throw new UnsupportedOperationException("URI did not match any of the available options");
+        }
+        return null;
     }
 
     @Override
