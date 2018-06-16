@@ -18,8 +18,10 @@ public class Movie implements Serializable {
     private static final String TAG = "MovieClass";
     private String mPosterPath;
     private Boolean mAdult;
+    private boolean mFavorite;
     private String mOverview;
     private Date mReleaseDate;
+    private long mTmdbId;
     private long mId;
     private String mOriginalTitle;
     private String mOriginalLanguage;
@@ -33,6 +35,7 @@ public class Movie implements Serializable {
     private List<MovieReview> mReviews = new ArrayList<>();
     private List<MovieVideo> mVideos = new ArrayList<>();
     private int mRunTime;
+
     public static class Builder{
         private Movie mMovie = new Movie();
         public Builder(){}
@@ -64,7 +67,7 @@ public class Movie implements Serializable {
                     .overview(jo.optString(TMDB.JSON_KEY_OVERVIEW))
                     .runTimeMinutes(jo.optInt(TMDB.JSON_KEY_RUNTIME))
                     .voteCount(jo.optInt(TMDB.JSON_KEY_VOTE_COUNT))
-                    .id(jo.optInt(TMDB.JSON_KEY_ID))
+                    .tmdbId(jo.optInt(TMDB.JSON_KEY_ID))
                     .backdropPath(jo.optString(TMDB.JSON_KEY_BACKDROP_PATH))
                     .originalLanguage(jo.optString(TMDB.JSON_KEY_ORIGINALLANGUAGE))
                     .posterPath(jo.optString(TMDB.JSON_KEY_POSTER_PATH))
@@ -74,6 +77,11 @@ public class Movie implements Serializable {
                 } catch (ParseException e) {
                 Log.e(TAG, "could not parse release date string(require yyyy-MM-dd: "+ jo.optString(TMDB.JSON_KEY_RELEASEDATE));
             }
+            return this;
+        }
+
+        public Builder id(long id) {
+            mMovie.setId(id);
             return this;
         }
 
@@ -120,8 +128,8 @@ public class Movie implements Serializable {
             mMovie.setVoteAverage(d);
             return this;
         }
-        public Builder id(int i){
-            mMovie.setId(i);
+        public Builder tmdbId(long i){
+            mMovie.setTmdbId(i);
             return this;
         }
 
@@ -135,6 +143,18 @@ public class Movie implements Serializable {
     public Builder buildUpon(){
         return new Builder(this);
     }
+    public void setId(long id) {
+        mId = id;
+    }
+
+    public boolean isFavorite() {
+        return mFavorite;
+    }
+
+    public void setFavorite(boolean favorite) {
+        mFavorite = favorite;
+    }
+
     public String getPosterPath() {
         return mPosterPath;
     }
@@ -173,7 +193,9 @@ public class Movie implements Serializable {
     public List<MovieReview> getReviews() {
         return mReviews;
     }
-
+    public long getId(){
+        return mId;
+    }
     public void setReviews(List<MovieReview> reviews) {
         if(reviews == null){
             mReviews.clear();
@@ -234,12 +256,12 @@ public class Movie implements Serializable {
         mReleaseDate = releaseDate;
     }
 
-    public long getId() {
-        return mId;
+    public long getTmdbId() {
+        return mTmdbId;
     }
 
-    public void setId(long id) {
-        mId = id;
+    public void setTmdbId(long id) {
+        mTmdbId = id;
     }
 
     public String getOriginalTitle() {

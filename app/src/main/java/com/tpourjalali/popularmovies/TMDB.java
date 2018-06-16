@@ -57,6 +57,7 @@ public class TMDB {
     public static final String JSON_KEY_GENRE_NAME = "name";
     public static final String JSON_KEY_VOTE_AVERAGE= "vote_average";
     public static final String TMDB_KEY_LANGUAGE = "language";
+    public static final SimpleDateFormat TMDB_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
 
 
     //END OF PUBLIC CONSTANTS
@@ -134,7 +135,7 @@ public class TMDB {
         switch (path){
             case TMDB_PATH_POPULAR_MOVIE:
             case TMDB_PATH_TOP_RATED_MOVIE:
-                String today = new SimpleDateFormat("yyyy-MM-dd")
+                String today = TMDB_DATE_FORMAT
                         .format(Calendar.getInstance().getTime());
                 ub.appendEncodedPath(path)
                         .appendQueryParameter(TMDB.TMDB_KEY_RELEASE_LTE, today);
@@ -225,39 +226,5 @@ public class TMDB {
         return null ;
     }
 
-    public static AsyncTaskLoader<List<Movie>> createMovieListLoader(final String path, final Context context){
-        return new AsyncTaskLoader<List<Movie>>(context) {
-            @Override
-            public List<Movie> loadInBackground() {
-                if(path == TMDB_PATH_TOP_RATED_MOVIE)
-                    return downloadTopRatedMovieList();
-                else return downloadPopularMovieList();
-            }
-        };
-    }
-    public static AsyncTaskLoader<Movie> createMovieDetailLoader(final long movie_id, Context context){
-        return new AsyncTaskLoader<Movie>(context) {
-            @Override
-            public Movie loadInBackground() {
-                return downloadMovie(movie_id);
-            }
-        };
-    }
-    public static AsyncTaskLoader<List<MovieReview>> createMovieReviewListLoader(final long movie_id, final Context context){
-        return new AsyncTaskLoader<List<MovieReview>>(context) {
-            @Override
-            public List<MovieReview> loadInBackground() {
-                return downloadMovieReviewList(movie_id);
-            }
-        };
-    }
-    public static AsyncTaskLoader<List<MovieVideo>> createMovieVideoListLoader(final long movie_id, final Context context) {
-        return new AsyncTaskLoader<List<MovieVideo>>(context) {
-            @Override
-            public List<MovieVideo> loadInBackground() {
-                return downloadMovieVideoList(movie_id);
-            }
-        };
-    }
 
 }

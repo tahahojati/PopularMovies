@@ -1,8 +1,8 @@
 package com.tpourjalali.popularmovies;
 
-import android.content.AsyncTaskLoader;
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -33,7 +33,7 @@ public class MovieListActivity extends AppCompatActivity  implements LoaderManag
     private String TMDB_API_KEY_V3;
     private RecyclerView mRecyclerView;
     private MovieAdapter mAdapter;
-    private String mSortingCriteria = TMDB.TMDB_PATH_POPULAR_MOVIE;
+    private Uri mSortingCriteria = MovieProviderContract.MovieEntry.POPULAR_MOVIES_URI;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,24 +67,22 @@ public class MovieListActivity extends AppCompatActivity  implements LoaderManag
         reloadMovies();
     }
     private void reloadMovies(){
-        Bundle args= new Bundle();
-        args.putString(ARG_SORT_BY, mSortingCriteria);
+//        Bundle args= new Bundle();
+//        args.putParcelable(ARG_SORT_BY, mSortingCriteria);
         LoaderManager lm = getSupportLoaderManager();
-        lm.restartLoader(LOAD_POPULAR_MOVIE_LIST, args, this).forceLoad();
+        lm.restartLoader(LOAD_POPULAR_MOVIE_LIST, null, this).forceLoad();
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater mi = getMenuInflater();
         mi.inflate(R.menu.movie_list_menu, menu);
-        switch (mSortingCriteria){
-            case TMDB.TMDB_PATH_TOP_RATED_MOVIE:
-                menu.findItem(R.id.menu_sort_rating).setChecked(true);
-                break;
-            case TMDB.TMDB_PATH_POPULAR_MOVIE:
-            default:
-                mSortingCriteria = TMDB.TMDB_PATH_POPULAR_MOVIE;
-                menu.findItem(R.id.menu_sort_popularity).setChecked(true);
+        if (mSortingCriteria.equals(MovieProviderContract.MovieEntry.POPULAR_MOVIES_URI)) {
+            menu.findItem(R.id.menu_sort_rating).setChecked(true);
+        }
+        else {
+            mSortingCriteria = MovieProviderContract.MovieEntry.POPULAR_MOVIES_URI;
+            menu.findItem(R.id.menu_sort_popularity).setChecked(true);
         }
         return true;
     }
@@ -96,17 +94,17 @@ public class MovieListActivity extends AppCompatActivity  implements LoaderManag
         switch (item.getItemId()) {
             case R.id.menu_sort_popularity:
                 item.setChecked(true);
-                setSortingCriteria(TMDB.TMDB_PATH_POPULAR_MOVIE);
+                setSortingCriteria(MovieProviderContract.MovieEntry.POPULAR_MOVIES_URI);
             case R.id.menu_sort_rating:
                 item.setChecked(true);
-                setSortingCriteria(TMDB.TMDB_PATH_TOP_RATED_MOVIE);
+                setSortingCriteria(MovieProviderContract.MovieEntry.TOPRATED_MOVIES_URI);
             default:
                 return super.onOptionsItemSelected(item);
         }
     }
-    private void setSortingCriteria(String criteria) {
+    private void setSortingCriteria(Uri criteria) {
         if(criteria == null )
-            criteria = TMDB.TMDB_PATH_POPULAR_MOVIE;
+            criteria = MovieProviderContract.MovieEntry.POPULAR_MOVIES_URI;
         if(criteria == mSortingCriteria)
             return;
         else {
@@ -120,7 +118,7 @@ public class MovieListActivity extends AppCompatActivity  implements LoaderManag
     @Override
     public Loader<List<Movie>> onCreateLoader(int id, @Nullable Bundle args) {
         Log.d(TAG, "creating a new MovieLoader!");
-        return TMDB.createMovieListLoader(mSortingCriteria, MovieListActivity.this);
+        return MovieUtils.createMovieListLoader(mSortingCriteria, MovieListActivity.this);
     }
 
     @Override
@@ -167,7 +165,7 @@ public class MovieListActivity extends AppCompatActivity  implements LoaderManag
         private ImageView mSharedView;
         @Override
         public void onClick(View v) {
-            Intent intent = MovieDetailActivity.newIntent(MovieListActivity.this, mMovie, mMovie.getId());
+            Intent intent = MovieDetailActivity.newIntent(MovieListActivity.this, mMovie, mMovie.getTmdbId());
             if(mSharedView != null) {
                 ActivityOptionsCompat options =
                         ActivityOptionsCompat.makeSceneTransitionAnimation(MovieListActivity.this,

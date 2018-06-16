@@ -1,5 +1,7 @@
 package com.tpourjalali.popularmovies;
 
+import android.content.ContentResolver;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
@@ -89,6 +91,17 @@ public class MovieDetailActivity extends AppCompatActivity {
         mTrailersRV.setAdapter(createTrailersAdapter());
         mReviewsVP.setAdapter(createReviewsAdapter());
         mReviewsVP.setPageMargin(30);
+
+        mFavoriteIV.setOnClickListener((v) -> {
+            mMovie.setFavorite(!mMovie.isFavorite());
+            ContentValues cv = MovieUtils.generateCVForMovieProvider(mMovie);
+            getContentResolver().update(
+                    MovieProviderContract.MovieEntry.SINGLE_MOVIE_URI.buildUpon().appendPath(Long.toString(mMovie.getId())).build(),
+                    cv,
+                    null,
+                    null
+            );
+        });
     }
 
     private PagerAdapter createReviewsAdapter() {
@@ -198,7 +211,7 @@ public class MovieDetailActivity extends AppCompatActivity {
         return new LoaderManager.LoaderCallbacks<Movie>() {
             @Override
             public Loader<Movie> onCreateLoader(int id, Bundle args) {
-                return TMDB.createMovieDetailLoader(mMovie.getId(),MovieDetailActivity.this);
+                return MovieUtils.createMovieDetailLoader(mMovie.getTmdbId(),MovieDetailActivity.this);
             }
 
             @Override
@@ -221,7 +234,7 @@ public class MovieDetailActivity extends AppCompatActivity {
             @NonNull
             @Override
             public Loader<List<MovieReview>> onCreateLoader(int id, @Nullable Bundle args) {
-                return TMDB.createMovieReviewListLoader(mMovieId, MovieDetailActivity.this);
+                return MovieUtils.createMovieReviewListLoader(mMovieId, MovieDetailActivity.this);
             }
 
             @Override
@@ -242,7 +255,7 @@ public class MovieDetailActivity extends AppCompatActivity {
             @NonNull
             @Override
             public Loader<List<MovieVideo>> onCreateLoader(int id, @Nullable Bundle args) {
-                return TMDB.createMovieVideoListLoader(mMovieId, MovieDetailActivity.this);
+                return MovieUtils.createMovieVideoListLoader(mMovieId, MovieDetailActivity.this);
             }
 
             @Override
