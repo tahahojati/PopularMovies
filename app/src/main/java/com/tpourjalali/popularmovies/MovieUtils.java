@@ -58,7 +58,11 @@ final public class MovieUtils {
         return new AsyncTaskLoader<Movie>(context) {
             @Override
             public Movie loadInBackground() {
-                return TMDB.downloadMovie(movie_id);
+                ContentResolver cr = context.getContentResolver();
+                Uri uri = MovieProviderContract.MovieEntry.SINGLE_MOVIE_URI.buildUpon().appendPath(Long.toString(movie_id)).build();
+                Cursor movieCursor = cr.query(uri, null, null, null, null);
+                MovieProviderContract.MovieEntry.MovieCursorWrapper wrapper = new MovieProviderContract.MovieEntry.MovieCursorWrapper(movieCursor);
+                return wrapper.getMovie();
             }
         };
     }
@@ -66,6 +70,7 @@ final public class MovieUtils {
         return new AsyncTaskLoader<List<MovieReview>>(context) {
             @Override
             public List<MovieReview> loadInBackground() {
+
                 return TMDB.downloadMovieReviewList(movie_id);
             }
         };

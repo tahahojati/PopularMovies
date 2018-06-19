@@ -84,7 +84,11 @@ public final class MovieProviderContract {
                 super(cursor);
             }
             public Movie getMovie(){
+                if(isClosed())
+                    return null;
                 try {
+                    if (isBeforeFirst() || isAfterLast())
+                        moveToFirst();
                     return new Movie.Builder()
                             .id(getLong(getColumnIndex(_ID)))
                             .tmdbId(getLong(getColumnIndex(COLUMN_TMDB_ID)))
@@ -111,6 +115,93 @@ public final class MovieProviderContract {
                     list.add(getMovie());
                     while(moveToNext()){
                         list.add(getMovie());
+                    }
+                }
+            }
+        }
+    }
+    public final static class ReviewEntry implements BaseColumns{
+        public static final String TABLE_NAME = "review";
+        public static final String PATH = "review";
+        public static final String COLUMN_MOVIE_ID = "movie_id";
+        public static final String _ID = "id";
+        public static final String COLUMN_AUTHOR = "author";
+        public static final String COLUMN_CONTENT = "content";
+        public static final String COLUMN_URL = "url";
+
+        public static final Uri CONTENT_URI = BASE_CONTENT_URI.buildUpon().appendPath(PATH).build();
+        public static final String CONTENT_ITEM_TYPE = ContentResolver.CURSOR_ITEM_BASE_TYPE + CONTENT_URI.getEncodedPath();
+        public static final String CONTENT_DIR_TYPE = ContentResolver.CURSOR_DIR_BASE_TYPE + CONTENT_URI.getEncodedPath();
+
+        public static class ReviewCursorWrapper extends CursorWrapper {
+            public ReviewCursorWrapper(Cursor cursor) {
+                super(cursor);
+            }
+            public MovieReview getMovieReview(){
+                if(isClosed())
+                    return null;
+                if (isBeforeFirst() || isAfterLast())
+                    moveToFirst();
+                MovieReview mr = new MovieReview();
+                mr.setId(getString(getColumnIndex(_ID)));
+                mr.setAuthor(getString(getColumnIndex(COLUMN_AUTHOR)));
+                mr.setContent(getString(getColumnIndex(COLUMN_CONTENT)));
+                mr.setMovieId(getLong(getColumnIndex(COLUMN_MOVIE_ID)));
+                mr.setUrl(getString(getColumnIndex(COLUMN_URL)));
+                return mr;
+            }
+            public void addMovieReviewsToList(@NonNull List<MovieReview> list){
+                Objects.requireNonNull(list);
+                if(getCount() > 0){
+                    moveToFirst();
+                    list.add(getMovieReview());
+                    while(moveToNext()){
+                        list.add(getMovieReview());
+                    }
+                }
+            }
+        }
+    }
+    public final static class VideoEntry implements BaseColumns{
+        public static final String TABLE_NAME = "video";
+        public static final String PATH = "video";
+
+        public static final String COLUMN_MOVIE_ID = "movie_id";
+        public static final String _ID = "id";
+        public static final String COLUMN_KEY = "key";
+        public static final String COLUMN_SITE = "site";
+        public static final String COLUMN_NAME = "name";
+        public static final String COLUMN_SIZE = "size";
+
+
+        public static final Uri CONTENT_URI = BASE_CONTENT_URI.buildUpon().appendPath(PATH).build();
+        public static final String CONTENT_ITEM_TYPE = ContentResolver.CURSOR_ITEM_BASE_TYPE + CONTENT_URI.getEncodedPath();
+        public static final String CONTENT_DIR_TYPE = ContentResolver.CURSOR_DIR_BASE_TYPE + CONTENT_URI.getEncodedPath();
+        public static class VideoCursorWrapper extends CursorWrapper {
+            public VideoCursorWrapper(Cursor cursor) {
+                super(cursor);
+            }
+            public MovieVideo getMovieVideo(){
+                if(isClosed())
+                    return null;
+                if (isBeforeFirst() || isAfterLast())
+                    moveToFirst();
+                MovieVideo mr = new MovieVideo();
+                mr.setId(getString(getColumnIndex(_ID)));
+                mr.setName(getString(getColumnIndex(COLUMN_NAME)));
+                mr.setKey(getString(getColumnIndex(COLUMN_KEY)));
+                mr.setMovieId(getLong(getColumnIndex(COLUMN_MOVIE_ID)));
+                mr.setSize(getInt(getColumnIndex(COLUMN_SIZE)));
+                mr.setSite(getString(getColumnIndex(COLUMN_SITE)));
+                return mr;
+            }
+            public void addMovieVideosToList(@NonNull List<MovieVideo> list){
+                Objects.requireNonNull(list);
+                if(getCount() > 0){
+                    moveToFirst();
+                    list.add(getMovieVideo());
+                    while(moveToNext()){
+                        list.add(getMovieVideo());
                     }
                 }
             }

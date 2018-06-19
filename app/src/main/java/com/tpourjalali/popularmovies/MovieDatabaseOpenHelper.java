@@ -13,6 +13,12 @@ public class MovieDatabaseOpenHelper extends SQLiteOpenHelper{
 
     @Override
     public void onCreate(SQLiteDatabase db) {
+        createMovieTable(db);
+        createReviewTable(db);
+        createVideoTable(db);
+    }
+
+    private void createMovieTable(SQLiteDatabase db) {
         String moviesCreate = "CREATE TABLE " + MovieProviderContract.MovieEntry.TABLE_NAME + "("
                 + MovieProviderContract.MovieEntry._ID + " integer primary key,"
                 +MovieProviderContract.MovieEntry.COLUMN_TMDB_ID            +" integer, \n"
@@ -35,6 +41,36 @@ public class MovieDatabaseOpenHelper extends SQLiteOpenHelper{
                 + ");";
         db.beginTransaction();
         db.execSQL(moviesCreate);
+        db.endTransaction();
+    }
+
+    private void createReviewTable(SQLiteDatabase db) {
+        String reviewsCreate = "CREATE TABLE " + MovieProviderContract.ReviewEntry.TABLE_NAME + "("
+                + MovieProviderContract.ReviewEntry._ID + " text primary key,"
+                +MovieProviderContract.ReviewEntry.COLUMN_AUTHOR            +" text, \n"
+                +MovieProviderContract.ReviewEntry.COLUMN_CONTENT		    +" text, \n"
+                +MovieProviderContract.ReviewEntry.COLUMN_MOVIE_ID			+" integer,\n"
+                +MovieProviderContract.ReviewEntry.COLUMN_URL			+" text,\n"
+                +"FOREIGN KEY("+ MovieProviderContract.ReviewEntry.COLUMN_MOVIE_ID+") REFERENCES "
+                + MovieProviderContract.MovieEntry.TABLE_NAME+"("+ MovieProviderContract.MovieEntry._ID + ")"
+                + ");";
+        db.beginTransaction();
+        db.execSQL(reviewsCreate);
+        db.endTransaction();
+    }
+    private void createVideoTable(SQLiteDatabase db) {
+        String reviewsCreate = "CREATE TABLE " + MovieProviderContract.VideoEntry.TABLE_NAME + "("
+                + MovieProviderContract.VideoEntry._ID + " text primary key,"
+                +MovieProviderContract.VideoEntry.COLUMN_KEY           +" text, \n"
+                +MovieProviderContract.VideoEntry.COLUMN_SITE		    +" text, \n"
+                +MovieProviderContract.VideoEntry.COLUMN_MOVIE_ID			+" integer,\n"
+                +MovieProviderContract.VideoEntry.COLUMN_SIZE			+" integer,\n"
+                +MovieProviderContract.VideoEntry.COLUMN_NAME			+" text,\n"
+                +"FOREIGN KEY("+ MovieProviderContract.VideoEntry.COLUMN_MOVIE_ID+") REFERENCES "
+                + MovieProviderContract.MovieEntry.TABLE_NAME+"("+ MovieProviderContract.MovieEntry._ID + ")"
+                + ");";
+        db.beginTransaction();
+        db.execSQL(reviewsCreate);
         db.endTransaction();
     }
 
