@@ -22,7 +22,7 @@ final public class MovieUtils {
         cv.put(MovieProviderContract.MovieEntry.COLUMN_ADULT				,movie.getAdult());
         cv.put(MovieProviderContract.MovieEntry.COLUMN_OVERVIEW			,movie.getOverview());
         cv.put(MovieProviderContract.MovieEntry.COLUMN_RELEASE_DATE		,movie.getReleaseDate().toString());
-        cv.put(MovieProviderContract.MovieEntry._ID					    ,movie.getId());
+        cv.put(MovieProviderContract.MovieEntry._ID					    ,movie.getTmdbId());
         cv.put(MovieProviderContract.MovieEntry.COLUMN_ORIGINAL_TITLE		,movie.getOriginalTitle());
         cv.put(MovieProviderContract.MovieEntry.COLUMN_ORIGINAL_LANGUAGE	,movie.getOriginalLanguage());
         cv.put(MovieProviderContract.MovieEntry.COLUMN_TITLE				,movie.getTitle());
@@ -37,6 +37,16 @@ final public class MovieUtils {
         cv.put(MovieProviderContract.MovieEntry.COLUMN_FAVORITE           ,movie.isFavorite());
         return cv;
     }
+
+    public static void saveMovieToFavorites(@NonNull Movie movie, @NonNull Context context) {
+        // update for movie,
+        long id = movie.getId();
+        movie.setFavorite(true);
+        Uri uri = MovieProviderContract.MovieEntry.SINGLE_MOVIE_URI
+                .buildUpon().appendPath(Long.toString(id)).build();
+        context.getContentResolver().update(uri, generateCVForMovieProvider(movie), null, null);
+    }
+
     public static AsyncTaskLoader<List<Movie>> createMovieListLoader(final Uri uri, final Context context){
         return new AsyncTaskLoader<List<Movie>>(context) {
             @Override
@@ -70,8 +80,13 @@ final public class MovieUtils {
         return new AsyncTaskLoader<List<MovieReview>>(context) {
             @Override
             public List<MovieReview> loadInBackground() {
-
-                return TMDB.downloadMovieReviewList(movie_id);
+                ContentResolver cr = context.getContentResolver();
+                Uri reviewUri = MovieProviderContract.ReviewEntry.CONTENT_URI
+                        .buildUpon().appendPath(Long.toString(movie_id)).build();
+                Cursor reviewCursor = cr.query(reviewUri, null, null, null,null);
+                List<MovieReview> list = new ArrayList<>(reviewCursor.getCount());
+                new MovieProviderContract.ReviewEntry.ReviewCursorWrapper(reviewCursor).addMovieReviewsToList(list);
+                return list;
             }
         };
     }
@@ -79,8 +94,34 @@ final public class MovieUtils {
         return new AsyncTaskLoader<List<MovieVideo>>(context) {
             @Override
             public List<MovieVideo> loadInBackground() {
-                return TMDB.downloadMovieVideoList(movie_id);
+                    ContentResolver cr = context.getContentResolver();
+                    Uri reviewUri = MovieProviderContract.ReviewEntry.CONTENT_URI
+                            .buildUpon().appendPath(Long.toString(movie_id)).build();
+                    Cursor reviewCursor = cr.query(reviewUri, null, null, null,null);
+                    List<MovieVideo> list = new ArrayList<>(reviewCursor.getCount());
+                    new MovieProviderContract.VideoEntry.VideoCursorWrapper(reviewCursor).addMovieVideosToList(list);
+                    return list;
             }
         };
     }
 }
+
+/*   public static ContentValues generateCVForMovieProvider(MovieReview review){
+        ContentValues cv = new ContentValues();
+        cv.put(MovieProviderContract.ReviewEntry.COLUMN_AUTHOR      ,review.getAuthor());
+        cv.put(MovieProviderContract.ReviewEntry.COLUMN_CONTENT		,review.getContent());
+        cv.put(MovieProviderContract.ReviewEntry.COLUMN_MOVIE_ID	,review.getMovieId());
+        cv.put(MovieProviderContract.ReviewEntry.COLUMN_URL			,review.getUrl());
+        cv.put(MovieProviderContract.ReviewEntry._ID				,review.getId());
+        return cv;
+    }
+    public static ContentValues generateCVForMovieProvider(MovieVideo video){
+        ContentValues cv = new ContentValues();
+        cv.put(MovieProviderContract.VideoEntry.COLUMN_KEY          ,video.getKey());
+        cv.put(MovieProviderContract.VideoEntry.COLUMN_MOVIE_ID		,video.getMovieId());
+        cv.put(MovieProviderContract.VideoEntry.COLUMN_NAME			,video.getName());
+        cv.put(MovieProviderContract.VideoEntry.COLUMN_SITE			,video.getSite());
+        cv.put(MovieProviderContract.VideoEntry.COLUMN_SIZE		    ,video.getSize());
+        cv.put(MovieProviderContract.VideoEntry._ID					,video.getId());
+        return cv;
+    } */

@@ -76,9 +76,9 @@ public class MovieProvider extends ContentProvider {
         * 2- Should be able to query favorite movies.
         * 3- Query should check local db even for popular movies, just so we can mark the favorite movies.
          */
-        List<Movie> movieList;
-        List<MovieReview> reviewList;
-        List<MovieVideo> videoList;
+        List<ContentValues> movieList;
+        List<ContentValues> reviewList;
+        List<ContentValues> videoList;
         long movie_id;
         switch (sUriMatcher.match(uri)){
             case CODE_POPULAR_MOVIES:
@@ -118,35 +118,42 @@ public class MovieProvider extends ContentProvider {
         * Update should insert/remove reviews, videos, and images from local storage.
          */
         switch (sUriMatcher.match(uri)){
-            case CODE_POPULAR_MOVIES:
-                throw new UnsupportedOperationException("URI did not match any of the available options");
-            case CODE_TOPRATED_MOVIES:
-                throw new UnsupportedOperationException("URI did not match any of the available options");
-            case CODE_FAVORITE_MOVIE:
-
             case CODE_SINGLE_MOVIE:
                 MovieDatabaseOpenHelper helper = new MovieDatabaseOpenHelper(getContext());
-                SQLiteDatabase db = helper.getWritableDatabase();
+                final SQLiteDatabase db = helper.getWritableDatabase();
                 if(!values.containsKey(MovieProviderContract.MovieEntry.COLUMN_FAVORITE) || !values.getAsBoolean(MovieProviderContract.MovieEntry.COLUMN_FAVORITE)){
                     // need to remove from db
                     db.delete(MovieProviderContract.MovieEntry.TABLE_NAME, MovieProviderContract.MovieEntry._ID + "=?",new String[]{
                             uri.getLastPathSegment()
                     });
+
+                    //TODO: delete the images as well
                 } else {
+                    //download the movie and all of its artifacts and store them to db.
+                    long movie_id = Long.parseLong(uri.getLastPathSegment());
+                    ContentValues movie = TMDB.downloadMovie(movie_id);
+                    List<ContentValues> videos = TMDB.downloadMovieVideoList(movie_id);
+                    List<ContentValues> reviews = TMDB.downloadMovieReviewList(movie_id);
+
+                    db.beginTransaction();
                     db.insert(MovieProviderContract.MovieEntry.TABLE_NAME, null, values);
+                    videos.stream().forEach(video -> db.insert(MovieProviderContract.VideoEntry.TABLE_NAME, null, video));
+                    reviews.stream().forEach(review -> db.insert(MovieProviderContract.ReviewEntry.TABLE_NAME, null, review));
                 }
+                db.close();
                 return 1;
+            case CODE_POPULAR_MOVIES:
+            case CODE_TOPRATED_MOVIES:
+            case CODE_FAVORITE_MOVIE:
             case CODE_Review_FOR_MOVIE:
-
             case CODE_TRAILERS_FOR_MOVIE:
-
             case CODE_IMAGE:
             default:
                 throw new UnsupportedOperationException("URI did not match any of the available options");
         }
     }
 
-    private Cursor cursorFromMovieList(List<Movie> movieList) {
+    private Cursor cursorFromMovieList(List<ContentValues> movieList) {
         String[] colNames = new String[]{
                 MovieProviderContract.MovieEntry.COLUMN_TMDB_ID             ,
                 MovieProviderContract.MovieEntry.COLUMN_POSTER_PATH			,
@@ -168,31 +175,29 @@ public class MovieProvider extends ContentProvider {
 //                MovieProviderContract.MovieEntry.COLUMN_FAVORITE
         };
         final MatrixCursor mc =  new MatrixCursor(colNames,movieList.size());
-        for(Movie movie: movieList){
+        for(ContentValues movie: movieList){
             mc.addRow(new Object[]{
-                    movie.getTmdbId(),
-                    movie.getPosterPath(),
-                    movie.getAdult(),
-                    movie.getOverview(),
-                    MovieProviderContract.MovieEntry.MOVIE_DATE_FORMAT.format(movie.getReleaseDate()),
-                    movie.getId(),
-                    movie.getOriginalTitle(),
-                    movie.getOriginalLanguage(),
-                    movie.getTitle(),
-                    movie.getBackdropPath(),
-                    movie.getPopularity(),
-                    movie.getVoteCount(),
-                    movie.getVideo(),
-                    movie.getVoteAverage(),
-                    movie.getGenres(),
-                    movie.getRunTime(),
-//                    movie.getUserRating(),
-//                    movie.getFavorite(),
+                    movie.getAsLong(MovieProviderContract.MovieEntry.COLUMN_TMDB_ID)             ,
+                    movie.getAsString(MovieProviderContract.MovieEntry.COLUMN_POSTER_PATH)			,
+                    movie.getAsBoolean(MovieProviderContract.MovieEntry.COLUMN_ADULT)		,
+                    movie.getAsString( MovieProviderContract.MovieEntry.COLUMN_OVERVIEW)				,
+                    movie.getAsString(MovieProviderContract.MovieEntry.COLUMN_RELEASE_DATE)			,
+                    movie.getAsLong(MovieProviderContract.MovieEntry._ID)					    ,
+                    movie.getAsString(MovieProviderContract.MovieEntry.COLUMN_ORIGINAL_TITLE)		,
+                    movie.getAsString(MovieProviderContract.MovieEntry.COLUMN_ORIGINAL_LANGUAGE)	,
+                    movie.getAsString(MovieProviderContract.MovieEntry.COLUMN_TITLE)				,
+                    movie.getAsString(MovieProviderContract.MovieEntry.COLUMN_BACKDROP_PATH)		,
+                    movie.getAsString(MovieProviderContract.MovieEntry.COLUMN_POPULARITY)			,
+                    movie.getAsInteger(MovieProviderContract.MovieEntry.COLUMN_VOTE_COUNT)			,
+                    movie.getAsString(MovieProviderContract.MovieEntry.COLUMN_VIDEO)				,
+                    movie.getAsDouble(MovieProviderContract.MovieEntry.COLUMN_VOTE_AVERAGE	)		,
+                    movie.getAsString(MovieProviderContract.MovieEntry.COLUMN_GENRES	)			,
+                    movie.getAsInteger(MovieProviderContract.MovieEntry.COLUMN_RUNTIME	)			,
             });
         }
         return mc;
     }
-    private Cursor cursorFromReviewList(List<MovieReview> reviewList) {
+    private Cursor cursorFromReviewList(List<ContentValues> reviewList) {
         String[] colNames = new String[]{
                 MovieProviderContract.ReviewEntry.COLUMN_MOVIE_ID             ,
                 MovieProviderContract.ReviewEntry.COLUMN_URL			,
@@ -201,18 +206,18 @@ public class MovieProvider extends ContentProvider {
                 MovieProviderContract.ReviewEntry._ID					    ,
         };
         final MatrixCursor mc =  new MatrixCursor(colNames,reviewList.size());
-        for(MovieReview review: reviewList){
+        for(ContentValues review: reviewList){
             mc.addRow(new Object[]{
-                    review.getMovieId(),
-                    review.getUrl(),
-                    review.getContent(),
-                    review.getAuthor(),
-                    review.getId(),
+                    review.getAsLong(MovieProviderContract.ReviewEntry.COLUMN_MOVIE_ID)             ,
+                    review.getAsString(MovieProviderContract.ReviewEntry.COLUMN_URL)			,
+                    review.getAsString(MovieProviderContract.ReviewEntry.COLUMN_CONTENT)				,
+                    review.getAsString(MovieProviderContract.ReviewEntry.COLUMN_AUTHOR)				,
+                    review.getAsString(MovieProviderContract.ReviewEntry._ID)
             });
         }
         return mc;
     }
-    private Cursor cursorFromVideoList(List<MovieVideo> reviewList) {
+    private Cursor cursorFromVideoList(List<ContentValues> reviewList) {
         String[] colNames = new String[]{
                 MovieProviderContract.VideoEntry.COLUMN_MOVIE_ID             ,
                 MovieProviderContract.VideoEntry.COLUMN_SIZE			,
@@ -222,14 +227,14 @@ public class MovieProvider extends ContentProvider {
                 MovieProviderContract.VideoEntry.COLUMN_SITE					    ,
         };
         final MatrixCursor mc =  new MatrixCursor(colNames,reviewList.size());
-        for(MovieVideo video: reviewList){
+        for(ContentValues video: reviewList){
             mc.addRow(new Object[]{
-                    video.getMovieId(),
-                    video.getSize(),
-                    video.getName(),
-                    video.getKey(),
-                    video.getId(),
-                    video.getSite(),
+                    video.getAsLong(MovieProviderContract.VideoEntry.COLUMN_MOVIE_ID)             ,
+                    video.getAsInteger(MovieProviderContract.VideoEntry.COLUMN_SIZE)			,
+                    video.getAsString(MovieProviderContract.VideoEntry.COLUMN_NAME)				,
+                    video.getAsString(MovieProviderContract.VideoEntry.COLUMN_KEY)				,
+                    video.getAsString(MovieProviderContract.VideoEntry._ID)					    ,
+                    video.getAsString(MovieProviderContract.VideoEntry.COLUMN_SITE)
             });
         }
         return mc;

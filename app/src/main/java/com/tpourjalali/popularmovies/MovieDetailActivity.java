@@ -1,10 +1,12 @@
 package com.tpourjalali.popularmovies;
 
+import android.content.AsyncTaskLoader;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -94,13 +96,20 @@ public class MovieDetailActivity extends AppCompatActivity {
 
         mFavoriteIV.setOnClickListener((v) -> {
             mMovie.setFavorite(!mMovie.isFavorite());
-            ContentValues cv = MovieUtils.generateCVForMovieProvider(mMovie);
-            getContentResolver().update(
-                    MovieProviderContract.MovieEntry.SINGLE_MOVIE_URI.buildUpon().appendPath(Long.toString(mMovie.getId())).build(),
-                    cv,
-                    null,
-                    null
-            );
+            AsyncTask.THREAD_POOL_EXECUTOR.execute(()->{
+                ContentValues cv = MovieUtils.generateCVForMovieProvider(mMovie);
+                getContentResolver().update(
+                        MovieProviderContract.MovieEntry.SINGLE_MOVIE_URI.buildUpon().appendPath(Long.toString(mMovie.getId())).build(),
+                        cv,
+                        null,
+                        null
+                );
+            });
+            if(mMovie.isFavorite()){
+                mFavoriteIV.setImageLevel(1);
+            } else {
+                mFavoriteIV.setImageLevel(0);
+            }
         });
     }
 
@@ -177,6 +186,11 @@ public class MovieDetailActivity extends AppCompatActivity {
                         TextUtils.join(", ", mMovie.getGenres())
                 );
         mTitleTV.setText(mMovie.getTitle());
+        if(mMovie.isFavorite()){
+            mFavoriteIV.setImageLevel(1);
+        } else {
+            mFavoriteIV.setImageLevel(0);
+        }
         mMovieVoteCountTV.setText(Integer.toString(mMovie.getVoteCount()));
         mDetailsTV.setText(detailsString);
         mScoreTV.setText(Double.toString(mMovie.getVoteAverage()));

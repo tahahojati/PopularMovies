@@ -12,6 +12,13 @@ public class MovieDatabaseOpenHelper extends SQLiteOpenHelper{
     }
 
     @Override
+    public void onConfigure(SQLiteDatabase db) {
+        super.onConfigure(db);
+        db.setForeignKeyConstraintsEnabled(true);
+
+    }
+
+    @Override
     public void onCreate(SQLiteDatabase db) {
         createMovieTable(db);
         createReviewTable(db);
@@ -53,6 +60,7 @@ public class MovieDatabaseOpenHelper extends SQLiteOpenHelper{
                 +MovieProviderContract.ReviewEntry.COLUMN_URL			+" text,\n"
                 +"FOREIGN KEY("+ MovieProviderContract.ReviewEntry.COLUMN_MOVIE_ID+") REFERENCES "
                 + MovieProviderContract.MovieEntry.TABLE_NAME+"("+ MovieProviderContract.MovieEntry._ID + ")"
+                + "ON DELETE CASCADE"
                 + ");";
         db.beginTransaction();
         db.execSQL(reviewsCreate);
@@ -60,14 +68,15 @@ public class MovieDatabaseOpenHelper extends SQLiteOpenHelper{
     }
     private void createVideoTable(SQLiteDatabase db) {
         String reviewsCreate = "CREATE TABLE " + MovieProviderContract.VideoEntry.TABLE_NAME + "("
-                + MovieProviderContract.VideoEntry._ID + " text primary key,"
-                +MovieProviderContract.VideoEntry.COLUMN_KEY           +" text, \n"
-                +MovieProviderContract.VideoEntry.COLUMN_SITE		    +" text, \n"
-                +MovieProviderContract.VideoEntry.COLUMN_MOVIE_ID			+" integer,\n"
-                +MovieProviderContract.VideoEntry.COLUMN_SIZE			+" integer,\n"
-                +MovieProviderContract.VideoEntry.COLUMN_NAME			+" text,\n"
-                +"FOREIGN KEY("+ MovieProviderContract.VideoEntry.COLUMN_MOVIE_ID+") REFERENCES "
+                + MovieProviderContract.VideoEntry._ID + " text PRIMARY KEY,\n"
+                + MovieProviderContract.VideoEntry.COLUMN_KEY           + " text, \n"
+                + MovieProviderContract.VideoEntry.COLUMN_SITE		    + " text, \n"
+                + MovieProviderContract.VideoEntry.COLUMN_MOVIE_ID			+ " integer,\n"
+                + MovieProviderContract.VideoEntry.COLUMN_SIZE			+ " integer,\n"
+                + MovieProviderContract.VideoEntry.COLUMN_NAME			+ " text,\n"
+                + "FOREIGN KEY("+ MovieProviderContract.VideoEntry.COLUMN_MOVIE_ID+") REFERENCES "
                 + MovieProviderContract.MovieEntry.TABLE_NAME+"("+ MovieProviderContract.MovieEntry._ID + ")"
+                + "ON DELETE CASCADE"
                 + ");";
         db.beginTransaction();
         db.execSQL(reviewsCreate);

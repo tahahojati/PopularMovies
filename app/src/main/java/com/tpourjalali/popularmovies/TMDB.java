@@ -1,5 +1,6 @@
 package com.tpourjalali.popularmovies;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.net.Uri;
 import android.support.annotation.Nullable;
@@ -12,9 +13,11 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 
@@ -70,19 +73,19 @@ public class TMDB {
         }
         return true;
     }
-    private static List<MovieReview> parseJSONMovieReviewList(String s, long movie_id) {
+    private static List<ContentValues> parseJSONMovieReviewList(String s, long movie_id) {
         //Log.d(TAG, s);
-        List<MovieReview> reviewList = new ArrayList<>();
+        List<ContentValues> reviewList = new ArrayList<>();
         try {
             JSONArray jarr = new JSONObject(s).getJSONArray("results");
             for (int i = 0; i < jarr.length(); ++i) {
                 JSONObject jo = jarr.getJSONObject(i);
-                MovieReview mr = new MovieReview();
-                mr.setId(jo.optString("id"));
-                mr.setAuthor(jo.optString("author"));
-                mr.setContent(jo.optString("content"));
-                mr.setUrl(jo.optString("url"));
-                mr.setMovieId(movie_id);
+                ContentValues mr = new ContentValues();
+                mr.put(MovieProviderContract.ReviewEntry._ID, jo.optString("id"));
+                mr.put(MovieProviderContract.ReviewEntry.COLUMN_AUTHOR, jo.optString("author"));
+                mr.put(MovieProviderContract.ReviewEntry.COLUMN_CONTENT, jo.optString("content"));
+                mr.put(MovieProviderContract.ReviewEntry.COLUMN_URL, jo.optString("url"));
+                mr.put(MovieProviderContract.ReviewEntry.COLUMN_MOVIE_ID, movie_id);
                 reviewList.add(mr);
             }
         } catch (JSONException e) {
@@ -90,36 +93,34 @@ public class TMDB {
         }
         return reviewList;
     }
-    private static List<Movie> parseJSONMovieList(String s) {
+    private static List<ContentValues> parseJSONMovieList(String s) {
         //Log.d(TAG, s);
-        List<Movie> movieList = new ArrayList<>();
+        List<ContentValues> movieList = new ArrayList<>();
         try{
             JSONArray jarr = new JSONObject(s).getJSONArray("results");
-            for(int i = 0; i < jarr.length(); ++i){
-                JSONObject jo = jarr.getJSONObject(i);
-                Movie.Builder mb = new Movie.Builder()
-                        .setFromTMDBMovieDetailJson(jo);
-                movieList.add(mb.build());
+            for(int j = 0; j < jarr.length(); ++j) {
+                ContentValues mv = parseJSONMovie(jarr.getJSONObject(j));
+                movieList.add(mv);
             }
         } catch (JSONException e) {
             Log.e(TAG,"error parsing movie array json",e);
         }
         return movieList;
     }
-    private static List<MovieVideo> parseJSONMovieVideoList(String s, long movie_id) {
+    private static List<ContentValues> parseJSONMovieVideoList(String s, long movie_id) {
         //Log.d(TAG, s);
-        List<MovieVideo> trailerList = new ArrayList<>();
+        List<ContentValues> trailerList = new ArrayList<>();
         try {
             JSONArray jarr = new JSONObject(s).getJSONArray("results");
             for (int i = 0; i < jarr.length(); ++i) {
                 JSONObject jo = jarr.getJSONObject(i);
-                MovieVideo mv = new MovieVideo();
-                mv.setId(jo.optString("id"));
-                mv.setKey(jo.optString("key"));
-                mv.setSite(jo.optString("site"));
-                mv.setName(jo.optString("name"));
-                mv.setSize(jo.optInt("size"));
-                mv.setMovieId(movie_id);
+                ContentValues mv = new ContentValues();
+                mv.put(MovieProviderContract.VideoEntry._ID, jo.optString("id"));
+                mv.put(MovieProviderContract.VideoEntry.COLUMN_KEY, jo.optString("key"));
+                mv.put(MovieProviderContract.VideoEntry.COLUMN_SITE, jo.optString("site"));
+                mv.put(MovieProviderContract.VideoEntry.COLUMN_NAME, jo.optString("name"));
+                mv.put(MovieProviderContract.VideoEntry.COLUMN_SIZE, jo.optInt("size"));
+                mv.put(MovieProviderContract.VideoEntry.COLUMN_MOVIE_ID, movie_id);
                 trailerList.add(mv);
             }
         } catch (JSONException e) {
@@ -127,8 +128,37 @@ public class TMDB {
         }
         return trailerList;
     }
-    private static Movie parseJSONMovie(String s){
-        return new Movie.Builder().setFromTMDBMovieDetailJson(s).build();
+    private static ContentValues parseJSONMovie(String s) {
+        try {
+            JSONObject jo = new JSONObject(s);
+            return parseJSONMovie(jo);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+    private static ContentValues parseJSONMovie(JSONObject jo){
+        ContentValues mv = new ContentValues();
+        JSONArray genreArray = jo.optJSONArray(TMDB.JSON_KEY_GENRE);
+        if (genreArray != null) {
+            List<String> genres = new LinkedList<>();
+            for (int i = 0; i < genreArray.length(); ++i) {
+                genres.add(genreArray.optJSONObject(i).optString(TMDB.JSON_KEY_GENRE_NAME));
+            }
+            mv.put(MovieProviderContract.MovieEntry.COLUMN_GENRES, String.join(", ", genres));
+        }
+        mv.put(MovieProviderContract.MovieEntry.COLUMN_TITLE, jo.optString(TMDB.JSON_KEY_TITLE));
+        mv.put(MovieProviderContract.MovieEntry.COLUMN_OVERVIEW, jo.optString(TMDB.JSON_KEY_OVERVIEW));
+        mv.put(MovieProviderContract.MovieEntry.COLUMN_RUNTIME, jo.optInt(TMDB.JSON_KEY_RUNTIME));
+        mv.put(MovieProviderContract.MovieEntry.COLUMN_VOTE_COUNT, jo.optInt(TMDB.JSON_KEY_VOTE_COUNT));
+        mv.put(MovieProviderContract.MovieEntry.COLUMN_TMDB_ID, jo.optInt(TMDB.JSON_KEY_ID));
+        mv.put(MovieProviderContract.MovieEntry._ID, jo.optInt(TMDB.JSON_KEY_ID));
+        mv.put(MovieProviderContract.MovieEntry.COLUMN_BACKDROP_PATH, jo.optString(TMDB.JSON_KEY_BACKDROP_PATH));
+        mv.put(MovieProviderContract.MovieEntry.COLUMN_ORIGINAL_LANGUAGE, jo.optString(TMDB.JSON_KEY_ORIGINALLANGUAGE));
+        mv.put(MovieProviderContract.MovieEntry.COLUMN_POSTER_PATH, jo.optString(TMDB.JSON_KEY_POSTER_PATH));
+        mv.put(MovieProviderContract.MovieEntry.COLUMN_VOTE_AVERAGE, jo.optDouble(TMDB.JSON_KEY_VOTE_AVERAGE));
+        mv.put(MovieProviderContract.MovieEntry.COLUMN_RELEASE_DATE, jo.optString(TMDB.JSON_KEY_RELEASEDATE));
+        return mv;
     }
     private static String generateUri(String path, @Nullable List<Object> args){
         Uri.Builder ub = Uri.parse(TMDB_URL).buildUpon();
@@ -154,7 +184,7 @@ public class TMDB {
         ub.appendQueryParameter(TMDB.TMDB_KEY_API, sTMDBApiKey);
         return ub.toString();
     }
-    public static Movie downloadMovie(long movie_id){
+    public static ContentValues downloadMovie(long movie_id){
         String url = null ;
         List<Object> args = new ArrayList<>(1);
         args.add(new Long(movie_id));
@@ -169,7 +199,7 @@ public class TMDB {
         }
         return null ;
     }
-    public static List<MovieReview> downloadMovieReviewList(long movie_id){
+    public static List<ContentValues> downloadMovieReviewList(long movie_id){
         String url = null ;
         List<Object> args = new ArrayList<>(1);
         args.add(new Long(movie_id));
@@ -184,7 +214,7 @@ public class TMDB {
         }
         return null ;
     }
-    public static List<Movie> downloadPopularMovieList(){
+    public static List<ContentValues> downloadPopularMovieList(){
         String url = null ;
         try {
             url = generateUri(TMDB_PATH_POPULAR_MOVIE, null);
@@ -197,7 +227,7 @@ public class TMDB {
         }
         return null ;
     }
-    public static List<Movie> downloadTopRatedMovieList() {
+    public static List<ContentValues> downloadTopRatedMovieList() {
         String url = null;
         try {
             url = generateUri(TMDB_PATH_TOP_RATED_MOVIE, null);
@@ -210,7 +240,7 @@ public class TMDB {
         }
         return null;
     }
-    public static List<MovieVideo> downloadMovieVideoList(long movie_id){
+    public static List<ContentValues> downloadMovieVideoList(long movie_id){
         String url = null ;
         List<Object> args = new ArrayList<>(1);
         args.add(new Long(movie_id));
@@ -228,3 +258,65 @@ public class TMDB {
 
 
 }
+
+
+//old parse function version:
+/*
+    private static List<ContentValues> parseJSONMovieReviewList(String s, long movie_id) {
+        //Log.d(TAG, s);
+        List<MovieReview> reviewList = new ArrayList<>();
+        try {
+            JSONArray jarr = new JSONObject(s).getJSONArray("results");
+            for (int i = 0; i < jarr.length(); ++i) {
+                JSONObject jo = jarr.getJSONObject(i);
+                MovieReview mr = new MovieReview();
+                mr.setId(jo.optString("id"));
+                mr.setAuthor(jo.optString("author"));
+                mr.setContent(jo.optString("content"));
+                mr.setUrl(jo.optString("url"));
+                mr.setMovieId(movie_id);
+                reviewList.add(mr);
+            }
+        } catch (JSONException e) {
+            Log.e(TAG, "error parsing movie array json", e);
+        }
+        return reviewList;
+    }
+    private static List<ContentValues> parseJSONMovieList(String s) {
+        //Log.d(TAG, s);
+        List<Movie> movieList = new ArrayList<>();
+        try{
+            JSONArray jarr = new JSONObject(s).getJSONArray("results");
+            for(int i = 0; i < jarr.length(); ++i){
+                JSONObject jo = jarr.getJSONObject(i);
+                Movie.Builder mb = new Movie.Builder()
+                        .setFromTMDBMovieDetailJson(jo);
+                movieList.add(mb.build());
+            }
+        } catch (JSONException e) {
+            Log.e(TAG,"error parsing movie array json",e);
+        }
+        return movieList;
+    }
+    private static List<ContentValues> parseJSONMovieVideoList(String s, long movie_id) {
+        //Log.d(TAG, s);
+        List<MovieVideo> trailerList = new ArrayList<>();
+        try {
+            JSONArray jarr = new JSONObject(s).getJSONArray("results");
+            for (int i = 0; i < jarr.length(); ++i) {
+                JSONObject jo = jarr.getJSONObject(i);
+                MovieVideo mv = new MovieVideo();
+                mv.setId(jo.optString("id"));
+                mv.setKey(jo.optString("key"));
+                mv.setSite(jo.optString("site"));
+                mv.setName(jo.optString("name"));
+                mv.setSize(jo.optInt("size"));
+                mv.setMovieId(movie_id);
+                trailerList.add(mv);
+            }
+        } catch (JSONException e) {
+            Log.e(TAG, "error parsing movie array json", e);
+        }
+        return trailerList;
+    }
+ */
