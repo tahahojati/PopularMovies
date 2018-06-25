@@ -25,6 +25,7 @@ import java.util.Objects;
  *  4- Reviews
  */
 public final class MovieProviderContract {
+    private static final String TAG  = "MovieProviderContract";
     public static final String AUTHORITY = "com.tpourjalali.popularmovies";
     public static final Uri BASE_CONTENT_URI = Uri.parse("content://"+AUTHORITY);
     public final static class MovieEntry implements BaseColumns{
@@ -89,6 +90,8 @@ public final class MovieProviderContract {
                 try {
                     if (isBeforeFirst() || isAfterLast())
                         moveToFirst();
+                    String genres = getString(getColumnIndex(COLUMN_GENRES));
+                    if(genres == null) genres = "";
                     return new Movie.Builder()
                             .id(getLong(getColumnIndex(_ID)))
                             .tmdbId(getLong(getColumnIndex(COLUMN_TMDB_ID)))
@@ -99,7 +102,7 @@ public final class MovieProviderContract {
                             .posterPath(getString(getColumnIndex(COLUMN_POSTER_PATH)))
                             .backdropPath(getString(getColumnIndex(COLUMN_BACKDROP_PATH)))
                             .title(getString(getColumnIndex(COLUMN_TITLE)))
-                            .genres(Arrays.asList(TextUtils.split(getString(getColumnIndex(COLUMN_GENRES)), ",")))
+                            .genres(Arrays.asList(TextUtils.split(genres, ",")))
                             .runTimeMinutes(getInt(getColumnIndex(COLUMN_RUNTIME)))
                             .voteAverage(getDouble(getColumnIndex(COLUMN_VOTE_AVERAGE)))
                             .build();
@@ -187,6 +190,7 @@ public final class MovieProviderContract {
                 if (isBeforeFirst() || isAfterLast())
                     moveToFirst();
                 MovieVideo mr = new MovieVideo();
+                Log.d(TAG, "Columns: "+ TextUtils.join(", ",getColumnNames()) + " Name: "+COLUMN_NAME);
                 mr.setId(getString(getColumnIndex(_ID)));
                 mr.setName(getString(getColumnIndex(COLUMN_NAME)));
                 mr.setKey(getString(getColumnIndex(COLUMN_KEY)));

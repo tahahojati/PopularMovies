@@ -3,8 +3,10 @@ package com.tpourjalali.popularmovies;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Log;
 
 public class MovieDatabaseOpenHelper extends SQLiteOpenHelper{
+    private static final String TAG = "MovieDatabaseOpenHelper";
     public static final int VERSION = 1;
     public static final String DBNAME = "popular_movies_db";
     public MovieDatabaseOpenHelper(Context context) {
@@ -20,9 +22,13 @@ public class MovieDatabaseOpenHelper extends SQLiteOpenHelper{
 
     @Override
     public void onCreate(SQLiteDatabase db) {
+        Log.d(TAG, "Creating tables");
+        db.beginTransaction();
         createMovieTable(db);
         createReviewTable(db);
         createVideoTable(db);
+        db.setTransactionSuccessful();
+        db.endTransaction();
     }
 
     private void createMovieTable(SQLiteDatabase db) {
@@ -46,9 +52,7 @@ public class MovieDatabaseOpenHelper extends SQLiteOpenHelper{
                 +MovieProviderContract.MovieEntry.COLUMN_USER_RATING        +" integer,\n"
                 +MovieProviderContract.MovieEntry.COLUMN_FAVORITE           +" boolean\n"
                 + ");";
-        db.beginTransaction();
         db.execSQL(moviesCreate);
-        db.endTransaction();
     }
 
     private void createReviewTable(SQLiteDatabase db) {
@@ -62,9 +66,7 @@ public class MovieDatabaseOpenHelper extends SQLiteOpenHelper{
                 + MovieProviderContract.MovieEntry.TABLE_NAME+"("+ MovieProviderContract.MovieEntry._ID + ")"
                 + "ON DELETE CASCADE"
                 + ");";
-        db.beginTransaction();
         db.execSQL(reviewsCreate);
-        db.endTransaction();
     }
     private void createVideoTable(SQLiteDatabase db) {
         String reviewsCreate = "CREATE TABLE " + MovieProviderContract.VideoEntry.TABLE_NAME + "("
@@ -78,9 +80,7 @@ public class MovieDatabaseOpenHelper extends SQLiteOpenHelper{
                 + MovieProviderContract.MovieEntry.TABLE_NAME+"("+ MovieProviderContract.MovieEntry._ID + ")"
                 + "ON DELETE CASCADE"
                 + ");";
-        db.beginTransaction();
         db.execSQL(reviewsCreate);
-        db.endTransaction();
     }
 
     @Override

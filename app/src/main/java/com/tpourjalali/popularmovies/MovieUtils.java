@@ -95,7 +95,7 @@ final public class MovieUtils {
             @Override
             public List<MovieVideo> loadInBackground() {
                     ContentResolver cr = context.getContentResolver();
-                    Uri reviewUri = MovieProviderContract.ReviewEntry.CONTENT_URI
+                    Uri reviewUri = MovieProviderContract.VideoEntry.CONTENT_URI
                             .buildUpon().appendPath(Long.toString(movie_id)).build();
                     Cursor reviewCursor = cr.query(reviewUri, null, null, null,null);
                     List<MovieVideo> list = new ArrayList<>(reviewCursor.getCount());

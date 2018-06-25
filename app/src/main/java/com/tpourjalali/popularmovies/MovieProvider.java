@@ -7,6 +7,7 @@ import android.database.Cursor;
 import android.database.MatrixCursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
+import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,7 +20,7 @@ public class MovieProvider extends ContentProvider {
     private static final int CODE_TOPRATED_MOVIES = 20;
     private static final int CODE_SINGLE_MOVIE = 30;
     private static final int CODE_FAVORITE_MOVIE = 35;
-    private static final int CODE_Review_FOR_MOVIE = 40;
+    private static final int CODE_REVIEW_FOR_MOVIE = 40;
     private static final int CODE_TRAILERS_FOR_MOVIE = 50;
     private static final int CODE_IMAGE = 60;
 
@@ -36,7 +37,7 @@ public class MovieProvider extends ContentProvider {
             case CODE_POPULAR_MOVIES:
             case CODE_TOPRATED_MOVIES:
             case CODE_FAVORITE_MOVIE:
-            case CODE_Review_FOR_MOVIE:
+            case CODE_REVIEW_FOR_MOVIE:
             case CODE_TRAILERS_FOR_MOVIE:
                 return MovieProviderContract.MovieEntry.CONTENT_DIR_TYPE;
             case CODE_SINGLE_MOVIE:
@@ -54,7 +55,7 @@ public class MovieProvider extends ContentProvider {
             case CODE_TOPRATED_MOVIES:
             case CODE_FAVORITE_MOVIE:
             case CODE_SINGLE_MOVIE:
-            case CODE_Review_FOR_MOVIE:
+            case CODE_REVIEW_FOR_MOVIE:
             case CODE_TRAILERS_FOR_MOVIE:
             case CODE_IMAGE:
             default:
@@ -80,6 +81,7 @@ public class MovieProvider extends ContentProvider {
         List<ContentValues> reviewList;
         List<ContentValues> videoList;
         long movie_id;
+        Log.d(TAG, "uri: "+uri.toString()+" match: "+sUriMatcher.match(uri));
         switch (sUriMatcher.match(uri)){
             case CODE_POPULAR_MOVIES:
                 movieList = TMDB.downloadPopularMovieList();
@@ -95,7 +97,7 @@ public class MovieProvider extends ContentProvider {
                 movieList = new ArrayList<>();
                 movieList.add(TMDB.downloadMovie(movie_id));
                 return cursorFromMovieList(movieList);
-            case CODE_Review_FOR_MOVIE:
+            case CODE_REVIEW_FOR_MOVIE:
                 movie_id = Long.parseLong(uri.getLastPathSegment());
                 reviewList = TMDB.downloadMovieReviewList(movie_id);
                 return cursorFromReviewList(reviewList);
@@ -121,6 +123,7 @@ public class MovieProvider extends ContentProvider {
             case CODE_SINGLE_MOVIE:
                 MovieDatabaseOpenHelper helper = new MovieDatabaseOpenHelper(getContext());
                 final SQLiteDatabase db = helper.getWritableDatabase();
+                db.beginTransaction();
                 if(!values.containsKey(MovieProviderContract.MovieEntry.COLUMN_FAVORITE) || !values.getAsBoolean(MovieProviderContract.MovieEntry.COLUMN_FAVORITE)){
                     // need to remove from db
                     db.delete(MovieProviderContract.MovieEntry.TABLE_NAME, MovieProviderContract.MovieEntry._ID + "=?",new String[]{
@@ -135,17 +138,18 @@ public class MovieProvider extends ContentProvider {
                     List<ContentValues> videos = TMDB.downloadMovieVideoList(movie_id);
                     List<ContentValues> reviews = TMDB.downloadMovieReviewList(movie_id);
 
-                    db.beginTransaction();
                     db.insert(MovieProviderContract.MovieEntry.TABLE_NAME, null, values);
                     videos.stream().forEach(video -> db.insert(MovieProviderContract.VideoEntry.TABLE_NAME, null, video));
                     reviews.stream().forEach(review -> db.insert(MovieProviderContract.ReviewEntry.TABLE_NAME, null, review));
                 }
+                db.setTransactionSuccessful();
+                db.endTransaction();
                 db.close();
                 return 1;
             case CODE_POPULAR_MOVIES:
             case CODE_TOPRATED_MOVIES:
             case CODE_FAVORITE_MOVIE:
-            case CODE_Review_FOR_MOVIE:
+            case CODE_REVIEW_FOR_MOVIE:
             case CODE_TRAILERS_FOR_MOVIE:
             case CODE_IMAGE:
             default:
@@ -261,6 +265,16 @@ public class MovieProvider extends ContentProvider {
                 MovieProviderContract.AUTHORITY,
                 MovieProviderContract.MovieEntry.SINGLE_MOVIE_URI.getPath()+"/#",
                 CODE_SINGLE_MOVIE
+        );
+        res.addURI(
+                MovieProviderContract.AUTHORITY,
+                MovieProviderContract.ReviewEntry.CONTENT_URI.getPath()+"/#",
+                CODE_REVIEW_FOR_MOVIE
+        );
+        res.addURI(
+                MovieProviderContract.AUTHORITY,
+                MovieProviderContract.VideoEntry.CONTENT_URI.getPath()+"/#",
+                CODE_TRAILERS_FOR_MOVIE
         );
         return res;
     }
