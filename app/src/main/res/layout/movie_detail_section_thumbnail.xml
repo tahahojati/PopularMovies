@@ -22,11 +22,10 @@
         android:id="@+id/heart_iv"
         android:layout_width="40dp"
         android:contentDescription="Favorite"
-        android:tint="@android:color/white"
         android:layout_height="40dp"
         app:layout_constraintBottom_toBottomOf="@id/movie_thumbnail_iv"
         app:layout_constraintEnd_toEndOf="@id/movie_thumbnail_iv"
-        android:src="@drawable/ic_favorite_border_black_24dp"/>
+        android:src="@drawable/ic_favorite_level_list_24dp"/>
 
     <ImageView
         app:layout_constraintEnd_toEndOf="@id/movie_thumbnail_iv"

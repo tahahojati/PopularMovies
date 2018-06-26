@@ -96,7 +96,7 @@ public class MovieDetailActivity extends AppCompatActivity {
 
         mFavoriteIV.setOnClickListener((v) -> {
             mMovie.setFavorite(!mMovie.isFavorite());
-            AsyncTask.THREAD_POOL_EXECUTOR.execute(()->{
+            AsyncTask.SERIAL_EXECUTOR.execute(()->{
                 ContentValues cv = MovieUtils.generateCVForMovieProvider(mMovie);
                 getContentResolver().update(
                         MovieProviderContract.MovieEntry.SINGLE_MOVIE_URI.buildUpon().appendPath(Long.toString(mMovie.getId())).build(),
