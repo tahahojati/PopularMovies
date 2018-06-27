@@ -7,4 +7,5 @@
     <string name="movie_detail_section_header_trailers">Videos</string>
     <string name="movie_detail_section_header_reviews">Reviews</string>
     <string name="movie_detail_review_author">- %s</string>
+    <string name="sort_criteria_favorites">Favorites</string>
 </resources>

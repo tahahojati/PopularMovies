@@ -7,9 +7,12 @@ import android.database.Cursor;
 import android.database.MatrixCursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
+import android.support.annotation.NonNull;
+import android.text.TextUtils;
 import android.util.Log;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 public class MovieProvider extends ContentProvider {
@@ -77,6 +80,8 @@ public class MovieProvider extends ContentProvider {
         * 2- Should be able to query favorite movies.
         * 3- Query should check local db even for popular movies, just so we can mark the favorite movies.
          */
+        MovieDatabaseOpenHelper helper;
+        MatrixCursor res;
         List<ContentValues> movieList;
         List<ContentValues> reviewList;
         List<ContentValues> videoList;
@@ -85,12 +90,24 @@ public class MovieProvider extends ContentProvider {
         switch (sUriMatcher.match(uri)){
             case CODE_POPULAR_MOVIES:
                 movieList = TMDB.downloadPopularMovieList();
+                res = cursorFromMovieList(movieList);
+                applyFavoriteMoviesInMovieCursor(res);
                 return cursorFromMovieList(movieList);
             case CODE_TOPRATED_MOVIES:
                 movieList = TMDB.downloadTopRatedMovieList();
                 return cursorFromMovieList(movieList);
             case CODE_FAVORITE_MOVIE:
-                throw new UnsupportedOperationException("URI did not match any of the available options");
+                helper = new MovieDatabaseOpenHelper(getContext());
+                try(SQLiteDatabase db  = helper.getReadableDatabase()){
+                    Cursor cursor = db.query(MovieProviderContract.MovieEntry.TABLE_NAME,
+                            projection,
+                            selection,
+                            selectionArgs,
+                            null,
+                            null,
+                            sortOrder);
+                    return cursor;
+                }
             case CODE_SINGLE_MOVIE:
                 //TODO: update this
                 movie_id = Long.parseLong(uri.getLastPathSegment());
@@ -111,6 +128,35 @@ public class MovieProvider extends ContentProvider {
                 throw new UnsupportedOperationException("URI did not match any of the available options");
         }
         return null;
+    }
+    /*
+    * Does a query of favorite movies table looking for ids in the provided cursor. It then sets the favorite column to true for every item found.
+     */
+    private void applyFavoriteMoviesInMovieCursor(@NonNull MatrixCursor res) {
+        List<String> ids = new LinkedList<>();
+        res.moveToFirst();
+        while(!res.isAfterLast()){
+            ids.add(Long.toString(res.getLong(res.getColumnIndex(MovieProviderContract.MovieEntry._ID))));
+            res.moveToNext();
+        }
+        String ids_str = TextUtils.join(", ", ids);
+        String where = MovieProviderContract.MovieEntry._ID + " IN (?) ";
+        Cursor favorites = query(MovieProviderContract.MovieEntry.FAVORITE_MOVIES_URI, new String[]{MovieProviderContract.MovieEntry._ID}, where, new String[]{ids_str},null);
+        int favoritesIdColumnIndex = favorites.getColumnIndex(MovieProviderContract.MovieEntry._ID);
+        int resIdColumnIndex = res.getColumnIndex(MovieProviderContract.MovieEntry._ID);
+        //now for each item in res, check the favorites O(n^2)..
+        res.moveToFirst();
+        while(!res.isAfterLast()){
+            favorites.moveToFirst();
+            while (!favorites.isAfterLast()){
+                if(res.getLong(resIdColumnIndex) == favorites.getLong(favoritesIdColumnIndex)){
+                    res.addRow(res.RowBuilder);
+                    break;
+                }
+                favorites.moveToNext();
+            }
+            res.moveToNext();
+        }
     }
 
     @Override
@@ -157,7 +203,7 @@ public class MovieProvider extends ContentProvider {
         }
     }
 
-    private Cursor cursorFromMovieList(List<ContentValues> movieList) {
+    private MatrixCursor cursorFromMovieList(List<ContentValues> movieList) {
         String[] colNames = new String[]{
                 MovieProviderContract.MovieEntry.COLUMN_TMDB_ID             ,
                 MovieProviderContract.MovieEntry.COLUMN_POSTER_PATH			,
@@ -201,7 +247,7 @@ public class MovieProvider extends ContentProvider {
         }
         return mc;
     }
-    private Cursor cursorFromReviewList(List<ContentValues> reviewList) {
+    private MatrixCursor cursorFromReviewList(List<ContentValues> reviewList) {
         String[] colNames = new String[]{
                 MovieProviderContract.ReviewEntry.COLUMN_MOVIE_ID             ,
                 MovieProviderContract.ReviewEntry.COLUMN_URL			,
@@ -221,7 +267,7 @@ public class MovieProvider extends ContentProvider {
         }
         return mc;
     }
-    private Cursor cursorFromVideoList(List<ContentValues> reviewList) {
+    private MatrixCursor cursorFromVideoList(List<ContentValues> reviewList) {
         String[] colNames = new String[]{
                 MovieProviderContract.VideoEntry.COLUMN_MOVIE_ID             ,
                 MovieProviderContract.VideoEntry.COLUMN_SIZE			,

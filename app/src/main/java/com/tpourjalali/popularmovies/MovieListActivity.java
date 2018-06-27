@@ -95,14 +95,21 @@ public class MovieListActivity extends AppCompatActivity  implements LoaderManag
             case R.id.menu_sort_popularity:
                 item.setChecked(true);
                 setSortingCriteria(MovieProviderContract.MovieEntry.POPULAR_MOVIES_URI);
+                break;
             case R.id.menu_sort_rating:
                 item.setChecked(true);
                 setSortingCriteria(MovieProviderContract.MovieEntry.TOPRATED_MOVIES_URI);
+                break;
+            case R.id.menu_sort_favorites:
+                item.setChecked(true);
+                setSortingCriteria(MovieProviderContract.MovieEntry.FAVORITE_MOVIES_URI);
+                break;
             default:
                 return super.onOptionsItemSelected(item);
         }
+        return true;
     }
-    private void setSortingCriteria(Uri criteria) {
+    private void setSortingCriteria(@Nullable Uri criteria) {
         if(criteria == null )
             criteria = MovieProviderContract.MovieEntry.POPULAR_MOVIES_URI;
         if(criteria == mSortingCriteria)
