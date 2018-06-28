@@ -158,6 +158,7 @@ public class TMDB {
         mv.put(MovieProviderContract.MovieEntry.COLUMN_POSTER_PATH, jo.optString(TMDB.JSON_KEY_POSTER_PATH));
         mv.put(MovieProviderContract.MovieEntry.COLUMN_VOTE_AVERAGE, jo.optDouble(TMDB.JSON_KEY_VOTE_AVERAGE));
         mv.put(MovieProviderContract.MovieEntry.COLUMN_RELEASE_DATE, jo.optString(TMDB.JSON_KEY_RELEASEDATE));
+        mv.put(MovieProviderContract.MovieEntry.COLUMN_FAVORITE, 0);
         return mv;
     }
     private static String generateUri(String path, @Nullable List<Object> args){

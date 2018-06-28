@@ -226,6 +226,11 @@ class MovieHolder extends RecyclerView.ViewHolder{
 
     public void bind(Movie movie) {
         mMovie = movie;
+        if(mMovie.isFavorite()){
+            mHeartIv.setImageLevel(1);
+        } else {
+            mHeartIv.setImageLevel(0);
+        }
         mPosterClickListener.setMovie(mMovie);
         mFavoriteClickListener.setMovie(mMovie);
         Log.d(TAG, "url: "+ mMovie.getFullImagePath(TMDB.API_POSTER_SIZE_ORIGINAL, null));

@@ -1,7 +1,7 @@
 Please put your TMDB API KEYS INSIDE app/res/keys
 
 ### Todo: 
-
+- [ ] Add user ratings!
 - [ ] Images should be saved offline.
 - [ ] database operations should check for succeess and caatvh exceptions.
 - [ ] check if movie is favorite for detailed view. 

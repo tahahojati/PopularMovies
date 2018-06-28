@@ -137,6 +137,11 @@ public class Movie implements Serializable {
             mMovie.setOriginalLanguage(s);
             return this;
         }
+
+        public Builder favorite(boolean anInt) {
+            mMovie.setFavorite(anInt);
+            return this;
+        }
     }
 
     private Movie(){}

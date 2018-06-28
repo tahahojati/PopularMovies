@@ -12,6 +12,7 @@ import android.text.TextUtils;
 import android.util.Log;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -90,24 +91,22 @@ public class MovieProvider extends ContentProvider {
         switch (sUriMatcher.match(uri)){
             case CODE_POPULAR_MOVIES:
                 movieList = TMDB.downloadPopularMovieList();
-                res = cursorFromMovieList(movieList);
-                applyFavoriteMoviesInMovieCursor(res);
+                applyFavoriteMoviesInMovieList(movieList);
                 return cursorFromMovieList(movieList);
             case CODE_TOPRATED_MOVIES:
                 movieList = TMDB.downloadTopRatedMovieList();
                 return cursorFromMovieList(movieList);
             case CODE_FAVORITE_MOVIE:
                 helper = new MovieDatabaseOpenHelper(getContext());
-                try(SQLiteDatabase db  = helper.getReadableDatabase()){
-                    Cursor cursor = db.query(MovieProviderContract.MovieEntry.TABLE_NAME,
-                            projection,
-                            selection,
-                            selectionArgs,
-                            null,
-                            null,
-                            sortOrder);
-                    return cursor;
-                }
+                SQLiteDatabase db  = helper.getReadableDatabase();
+                Cursor cursor = db.query(MovieProviderContract.MovieEntry.TABLE_NAME,
+                        projection,
+                        selection,
+                        selectionArgs,
+                        null,
+                        null,
+                        sortOrder);
+                return cursor;
             case CODE_SINGLE_MOVIE:
                 //TODO: update this
                 movie_id = Long.parseLong(uri.getLastPathSegment());
@@ -132,31 +131,30 @@ public class MovieProvider extends ContentProvider {
     /*
     * Does a query of favorite movies table looking for ids in the provided cursor. It then sets the favorite column to true for every item found.
      */
-    private void applyFavoriteMoviesInMovieCursor(@NonNull MatrixCursor res) {
-        List<String> ids = new LinkedList<>();
-        res.moveToFirst();
-        while(!res.isAfterLast()){
-            ids.add(Long.toString(res.getLong(res.getColumnIndex(MovieProviderContract.MovieEntry._ID))));
-            res.moveToNext();
+    private void applyFavoriteMoviesInMovieList(@NonNull List<ContentValues> cvList) {
+        List<Long> ids = new ArrayList<>();
+        for(ContentValues cv: cvList){
+            ids.add(cv.getAsLong(MovieProviderContract.MovieEntry._ID));
         }
         String ids_str = TextUtils.join(", ", ids);
-        String where = MovieProviderContract.MovieEntry._ID + " IN (?) ";
-        Cursor favorites = query(MovieProviderContract.MovieEntry.FAVORITE_MOVIES_URI, new String[]{MovieProviderContract.MovieEntry._ID}, where, new String[]{ids_str},null);
+        Log.d(TAG, "Ids_str is: "+ids_str);
+        String where = MovieProviderContract.MovieEntry._ID + " IN ( " + ids_str + ")";
+        Cursor favorites = query(MovieProviderContract.MovieEntry.FAVORITE_MOVIES_URI, new String[]{MovieProviderContract.MovieEntry._ID}, where, null, MovieProviderContract.MovieEntry._ID);
         int favoritesIdColumnIndex = favorites.getColumnIndex(MovieProviderContract.MovieEntry._ID);
-        int resIdColumnIndex = res.getColumnIndex(MovieProviderContract.MovieEntry._ID);
-        //now for each item in res, check the favorites O(n^2)..
-        res.moveToFirst();
-        while(!res.isAfterLast()){
-            favorites.moveToFirst();
-            while (!favorites.isAfterLast()){
-                if(res.getLong(resIdColumnIndex) == favorites.getLong(favoritesIdColumnIndex)){
-                    res.addRow(res.RowBuilder);
-                    break;
-                }
-                favorites.moveToNext();
-            }
-            res.moveToNext();
+        favorites.moveToFirst();
+        ids.clear();
+        while(!favorites.isAfterLast()){
+            ids.add(favorites.getLong(favoritesIdColumnIndex));
+            favorites.moveToNext();
         }
+        for(ContentValues cv: cvList){
+            Long id = cv.getAsLong(MovieProviderContract.MovieEntry._ID);
+            if(Collections.binarySearch(ids, id) >= 0){
+                //the movie is marked favorite
+                cv.put(MovieProviderContract.MovieEntry.COLUMN_FAVORITE, 1);
+            }
+        }
+        favorites.close();
     }
 
     @Override
@@ -170,7 +168,7 @@ public class MovieProvider extends ContentProvider {
                 MovieDatabaseOpenHelper helper = new MovieDatabaseOpenHelper(getContext());
                 final SQLiteDatabase db = helper.getWritableDatabase();
                 db.beginTransaction();
-                if(!values.containsKey(MovieProviderContract.MovieEntry.COLUMN_FAVORITE) || !values.getAsBoolean(MovieProviderContract.MovieEntry.COLUMN_FAVORITE)){
+                if(!values.containsKey(MovieProviderContract.MovieEntry.COLUMN_FAVORITE) || values.getAsInteger(MovieProviderContract.MovieEntry.COLUMN_FAVORITE) == 0){
                     // need to remove from db
                     db.delete(MovieProviderContract.MovieEntry.TABLE_NAME, MovieProviderContract.MovieEntry._ID + "=?",new String[]{
                             uri.getLastPathSegment()
@@ -222,7 +220,7 @@ public class MovieProvider extends ContentProvider {
                 MovieProviderContract.MovieEntry.COLUMN_GENRES				,
                 MovieProviderContract.MovieEntry.COLUMN_RUNTIME				,
 //                MovieProviderContract.MovieEntry.COLUMN_USER_RATING         ,
-//                MovieProviderContract.MovieEntry.COLUMN_FAVORITE
+                MovieProviderContract.MovieEntry.COLUMN_FAVORITE
         };
         final MatrixCursor mc =  new MatrixCursor(colNames,movieList.size());
         for(ContentValues movie: movieList){
@@ -243,6 +241,8 @@ public class MovieProvider extends ContentProvider {
                     movie.getAsDouble(MovieProviderContract.MovieEntry.COLUMN_VOTE_AVERAGE	)		,
                     movie.getAsString(MovieProviderContract.MovieEntry.COLUMN_GENRES	)			,
                     movie.getAsInteger(MovieProviderContract.MovieEntry.COLUMN_RUNTIME	)			,
+                    //                MovieProviderContract.MovieEntry.COLUMN_USER_RATING         ,
+                    movie.getAsInteger(MovieProviderContract.MovieEntry.COLUMN_FAVORITE	)			,
             });
         }
         return mc;

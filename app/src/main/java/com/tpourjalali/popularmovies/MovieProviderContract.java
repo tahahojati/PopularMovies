@@ -103,6 +103,7 @@ public final class MovieProviderContract {
                             .backdropPath(getString(getColumnIndex(COLUMN_BACKDROP_PATH)))
                             .title(getString(getColumnIndex(COLUMN_TITLE)))
                             .genres(Arrays.asList(TextUtils.split(genres, ",")))
+                            .favorite(getInt(getColumnIndex(COLUMN_FAVORITE)) == 1)
                             .runTimeMinutes(getInt(getColumnIndex(COLUMN_RUNTIME)))
                             .voteAverage(getDouble(getColumnIndex(COLUMN_VOTE_AVERAGE)))
                             .build();
