@@ -21,7 +21,7 @@ final public class MovieUtils {
         cv.put(MovieProviderContract.MovieEntry.COLUMN_POSTER_PATH		,movie.getPosterPath());
         cv.put(MovieProviderContract.MovieEntry.COLUMN_ADULT				,movie.getAdult());
         cv.put(MovieProviderContract.MovieEntry.COLUMN_OVERVIEW			,movie.getOverview());
-        cv.put(MovieProviderContract.MovieEntry.COLUMN_RELEASE_DATE		,movie.getReleaseDate().toString());
+        cv.put(MovieProviderContract.MovieEntry.COLUMN_RELEASE_DATE		,TMDB.TMDB_DATE_FORMAT.format(movie.getReleaseDate()));
         cv.put(MovieProviderContract.MovieEntry._ID					    ,movie.getTmdbId());
         cv.put(MovieProviderContract.MovieEntry.COLUMN_ORIGINAL_TITLE		,movie.getOriginalTitle());
         cv.put(MovieProviderContract.MovieEntry.COLUMN_ORIGINAL_LANGUAGE	,movie.getOriginalLanguage());
@@ -34,7 +34,7 @@ final public class MovieUtils {
         cv.put(MovieProviderContract.MovieEntry.COLUMN_GENRES				, TextUtils.join(", ",movie.getGenres()));
         cv.put(MovieProviderContract.MovieEntry.COLUMN_RUNTIME			,movie.getRunTime());
 //        cv.put(MovieProviderContract.MovieEntry.COLUMN_USER_RATING        ,movie.get());
-        cv.put(MovieProviderContract.MovieEntry.COLUMN_FAVORITE           ,movie.isFavorite());
+        cv.put(MovieProviderContract.MovieEntry.COLUMN_FAVORITE           ,movie.isFavorite() ? 1:0);
         return cv;
     }
 
@@ -60,6 +60,7 @@ final public class MovieUtils {
                 MovieProviderContract.MovieEntry.MovieCursorWrapper wrapper = new MovieProviderContract.MovieEntry.MovieCursorWrapper(movieCursor);
                 ArrayList<Movie> movieList = new ArrayList<>(wrapper.getCount());
                 wrapper.addMoviesToList(movieList);
+                movieCursor.close();
                 return movieList;
             }
         };
@@ -72,7 +73,9 @@ final public class MovieUtils {
                 Uri uri = MovieProviderContract.MovieEntry.SINGLE_MOVIE_URI.buildUpon().appendPath(Long.toString(movie_id)).build();
                 Cursor movieCursor = cr.query(uri, null, null, null, null);
                 MovieProviderContract.MovieEntry.MovieCursorWrapper wrapper = new MovieProviderContract.MovieEntry.MovieCursorWrapper(movieCursor);
-                return wrapper.getMovie();
+                Movie movie = wrapper.getMovie();
+                wrapper.close();
+                return movie;
             }
         };
     }
@@ -86,6 +89,7 @@ final public class MovieUtils {
                 Cursor reviewCursor = cr.query(reviewUri, null, null, null,null);
                 List<MovieReview> list = new ArrayList<>(reviewCursor.getCount());
                 new MovieProviderContract.ReviewEntry.ReviewCursorWrapper(reviewCursor).addMovieReviewsToList(list);
+                reviewCursor.close();
                 return list;
             }
         };
@@ -97,9 +101,10 @@ final public class MovieUtils {
                     ContentResolver cr = context.getContentResolver();
                     Uri reviewUri = MovieProviderContract.VideoEntry.CONTENT_URI
                             .buildUpon().appendPath(Long.toString(movie_id)).build();
-                    Cursor reviewCursor = cr.query(reviewUri, null, null, null,null);
-                    List<MovieVideo> list = new ArrayList<>(reviewCursor.getCount());
-                    new MovieProviderContract.VideoEntry.VideoCursorWrapper(reviewCursor).addMovieVideosToList(list);
+                    Cursor videoCursor = cr.query(reviewUri, null, null, null,null);
+                    List<MovieVideo> list = new ArrayList<>(videoCursor.getCount());
+                    new MovieProviderContract.VideoEntry.VideoCursorWrapper(videoCursor).addMovieVideosToList(list);
+                    videoCursor.close();
                     return list;
             }
         };

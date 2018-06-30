@@ -4,13 +4,17 @@ import android.content.ContentProvider;
 import android.content.ContentValues;
 import android.content.UriMatcher;
 import android.database.Cursor;
+import android.database.CursorIndexOutOfBoundsException;
 import android.database.MatrixCursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
+import android.os.ParcelFileDescriptor;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.text.TextUtils;
 import android.util.Log;
 
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -67,6 +71,16 @@ public class MovieProvider extends ContentProvider {
         }
     }
 
+    @Nullable
+    @Override
+    public ParcelFileDescriptor openFile(@NonNull Uri uri, @NonNull String mode) throws FileNotFoundException {
+        if(mode != "r"){
+            return null;
+        }
+//        ParcelFileDescriptor.open(,"r", android.);
+        return super.openFile(uri,mode);
+    }
+
     @Override
     public boolean onCreate() {
         // TODO: Implement this to initialize your content provider on startup.
@@ -82,6 +96,7 @@ public class MovieProvider extends ContentProvider {
         * 3- Query should check local db even for popular movies, just so we can mark the favorite movies.
          */
         MovieDatabaseOpenHelper helper;
+        SQLiteDatabase db;
         MatrixCursor res;
         List<ContentValues> movieList;
         List<ContentValues> reviewList;
@@ -95,10 +110,11 @@ public class MovieProvider extends ContentProvider {
                 return cursorFromMovieList(movieList);
             case CODE_TOPRATED_MOVIES:
                 movieList = TMDB.downloadTopRatedMovieList();
+                applyFavoriteMoviesInMovieList(movieList);
                 return cursorFromMovieList(movieList);
             case CODE_FAVORITE_MOVIE:
                 helper = new MovieDatabaseOpenHelper(getContext());
-                SQLiteDatabase db  = helper.getReadableDatabase();
+                db  = helper.getReadableDatabase();
                 Cursor cursor = db.query(MovieProviderContract.MovieEntry.TABLE_NAME,
                         projection,
                         selection,
@@ -110,23 +126,42 @@ public class MovieProvider extends ContentProvider {
             case CODE_SINGLE_MOVIE:
                 //TODO: update this
                 movie_id = Long.parseLong(uri.getLastPathSegment());
+                helper = new MovieDatabaseOpenHelper(getContext());
+                db  = helper.getReadableDatabase();
                 movieList = new ArrayList<>();
-                movieList.add(TMDB.downloadMovie(movie_id));
-                return cursorFromMovieList(movieList);
+                Cursor movieCursor = db.query(MovieProviderContract.MovieEntry.TABLE_NAME, null, MovieProviderContract.MovieEntry._ID + "=?", new String[]{Long.toString(movie_id)}, null, null, null);
+                if(movieCursor.getCount() == 0){
+                    movieList.add(TMDB.downloadMovie(movie_id));
+                    return cursorFromMovieList(movieList);
+                } else {
+                    return movieCursor;
+                }
             case CODE_REVIEW_FOR_MOVIE:
                 movie_id = Long.parseLong(uri.getLastPathSegment());
-                reviewList = TMDB.downloadMovieReviewList(movie_id);
-                return cursorFromReviewList(reviewList);
+                helper = new MovieDatabaseOpenHelper(getContext());
+                db  = helper.getReadableDatabase();
+                Cursor reviewCursor = db.query(MovieProviderContract.ReviewEntry.TABLE_NAME, null, MovieProviderContract.ReviewEntry.COLUMN_MOVIE_ID + "=?", new String[]{Long.toString(movie_id)}, null, null, null);
+                if(reviewCursor.getCount() == 0){
+                    reviewList = TMDB.downloadMovieReviewList(movie_id);
+                    return cursorFromReviewList(reviewList);
+                } else {
+                    return reviewCursor;
+                }
             case CODE_TRAILERS_FOR_MOVIE:
                 movie_id = Long.parseLong(uri.getLastPathSegment());
-                videoList = TMDB.downloadMovieVideoList(movie_id);
-                return cursorFromVideoList(videoList);
+                helper = new MovieDatabaseOpenHelper(getContext());
+                db  = helper.getReadableDatabase();
+                Cursor videoCursor = db.query(MovieProviderContract.VideoEntry.TABLE_NAME, null, MovieProviderContract.VideoEntry.COLUMN_MOVIE_ID + "=?", new String[]{Long.toString(movie_id)}, null, null, null);
+                if(videoCursor.getCount() == 0){
+                    videoList = TMDB.downloadMovieVideoList(movie_id);
+                    return cursorFromVideoList(videoList);
+                } else {
+                    return videoCursor;
+                }
             case CODE_IMAGE:
-                break;
             default:
                 throw new UnsupportedOperationException("URI did not match any of the available options");
         }
-        return null;
     }
     /*
     * Does a query of favorite movies table looking for ids in the provided cursor. It then sets the favorite column to true for every item found.
@@ -166,30 +201,30 @@ public class MovieProvider extends ContentProvider {
         switch (sUriMatcher.match(uri)){
             case CODE_SINGLE_MOVIE:
                 MovieDatabaseOpenHelper helper = new MovieDatabaseOpenHelper(getContext());
-                final SQLiteDatabase db = helper.getWritableDatabase();
-                db.beginTransaction();
-                if(!values.containsKey(MovieProviderContract.MovieEntry.COLUMN_FAVORITE) || values.getAsInteger(MovieProviderContract.MovieEntry.COLUMN_FAVORITE) == 0){
-                    // need to remove from db
-                    db.delete(MovieProviderContract.MovieEntry.TABLE_NAME, MovieProviderContract.MovieEntry._ID + "=?",new String[]{
-                            uri.getLastPathSegment()
-                    });
+                try(final SQLiteDatabase db = helper.getWritableDatabase()) {
+                    db.beginTransaction();
+                    if (!values.containsKey(MovieProviderContract.MovieEntry.COLUMN_FAVORITE) || values.getAsInteger(MovieProviderContract.MovieEntry.COLUMN_FAVORITE) == 0) {
+                        // need to remove from db
+                        db.delete(MovieProviderContract.MovieEntry.TABLE_NAME, MovieProviderContract.MovieEntry._ID + "=?", new String[]{
+                                uri.getLastPathSegment()
+                        });
 
-                    //TODO: delete the images as well
-                } else {
-                    //download the movie and all of its artifacts and store them to db.
-                    long movie_id = Long.parseLong(uri.getLastPathSegment());
-                    ContentValues movie = TMDB.downloadMovie(movie_id);
-                    List<ContentValues> videos = TMDB.downloadMovieVideoList(movie_id);
-                    List<ContentValues> reviews = TMDB.downloadMovieReviewList(movie_id);
+                        //TODO: delete the images as well
+                    } else {
+                        //download the movie and all of its artifacts and store them to db.
+                        long movie_id = Long.parseLong(uri.getLastPathSegment());
+                        ContentValues movie = TMDB.downloadMovie(movie_id);
+                        List<ContentValues> videos = TMDB.downloadMovieVideoList(movie_id);
+                        List<ContentValues> reviews = TMDB.downloadMovieReviewList(movie_id);
 
-                    db.insert(MovieProviderContract.MovieEntry.TABLE_NAME, null, values);
-                    videos.stream().forEach(video -> db.insert(MovieProviderContract.VideoEntry.TABLE_NAME, null, video));
-                    reviews.stream().forEach(review -> db.insert(MovieProviderContract.ReviewEntry.TABLE_NAME, null, review));
+                        db.insert(MovieProviderContract.MovieEntry.TABLE_NAME, null, values);
+                        videos.stream().forEach(video -> db.insert(MovieProviderContract.VideoEntry.TABLE_NAME, null, video));
+                        reviews.stream().forEach(review -> db.insert(MovieProviderContract.ReviewEntry.TABLE_NAME, null, review));
+                    }
+                    db.setTransactionSuccessful();
+                    db.endTransaction();
+                    return 1;
                 }
-                db.setTransactionSuccessful();
-                db.endTransaction();
-                db.close();
-                return 1;
             case CODE_POPULAR_MOVIES:
             case CODE_TOPRATED_MOVIES:
             case CODE_FAVORITE_MOVIE:
@@ -247,6 +282,7 @@ public class MovieProvider extends ContentProvider {
         }
         return mc;
     }
+
     private MatrixCursor cursorFromReviewList(List<ContentValues> reviewList) {
         String[] colNames = new String[]{
                 MovieProviderContract.ReviewEntry.COLUMN_MOVIE_ID             ,

@@ -50,7 +50,7 @@ public class MovieDatabaseOpenHelper extends SQLiteOpenHelper{
                 +MovieProviderContract.MovieEntry.COLUMN_GENRES				+" text,\n"
                 +MovieProviderContract.MovieEntry.COLUMN_RUNTIME			    +" integer,\n"
                 +MovieProviderContract.MovieEntry.COLUMN_USER_RATING        +" integer,\n"
-                +MovieProviderContract.MovieEntry.COLUMN_FAVORITE           +" boolean\n"
+                +MovieProviderContract.MovieEntry.COLUMN_FAVORITE           +" boolean default 1\n"
                 + ");";
         db.execSQL(moviesCreate);
     }

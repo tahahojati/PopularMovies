@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.PersistableBundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityOptionsCompat;
@@ -30,6 +31,7 @@ public class MovieListActivity extends AppCompatActivity  implements LoaderManag
     public static final int LOAD_POPULAR_MOVIE_LIST = 10;
     private static final String ARG_SORT_BY = "sort by";
     private static final String TAG = "MovieListActivity";
+    private static final String STATE_KEY_SORTING_CRITERIA = "sort_criteria";
     private String TMDB_API_KEY_V3;
     private RecyclerView mRecyclerView;
     private MovieAdapter mAdapter;
@@ -38,6 +40,11 @@ public class MovieListActivity extends AppCompatActivity  implements LoaderManag
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        if(savedInstanceState != null){
+            Uri sortc = savedInstanceState.getParcelable(STATE_KEY_SORTING_CRITERIA);
+            if(sortc != null)
+                setSortingCriteria(sortc);
+        }
         TMDB_API_KEY_V3 = getString(R.string.tmdb_api_key_v3);
         setContentView(R.layout.activity_movie_list);
         mRecyclerView = findViewById(R.id.recycler_view);
@@ -77,10 +84,12 @@ public class MovieListActivity extends AppCompatActivity  implements LoaderManag
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater mi = getMenuInflater();
         mi.inflate(R.menu.movie_list_menu, menu);
-        if (mSortingCriteria.equals(MovieProviderContract.MovieEntry.POPULAR_MOVIES_URI)) {
+        if (mSortingCriteria.equals(MovieProviderContract.MovieEntry.TOPRATED_MOVIES_URI)) {
             menu.findItem(R.id.menu_sort_rating).setChecked(true);
         }
-        else {
+        else if (mSortingCriteria.equals(MovieProviderContract.MovieEntry.FAVORITE_MOVIES_URI)){
+            menu.findItem(R.id.menu_sort_favorites).setChecked(true);
+        } else {
             mSortingCriteria = MovieProviderContract.MovieEntry.POPULAR_MOVIES_URI;
             menu.findItem(R.id.menu_sort_popularity).setChecked(true);
         }
@@ -136,6 +145,12 @@ public class MovieListActivity extends AppCompatActivity  implements LoaderManag
     @Override
     public void onLoaderReset(@NonNull Loader loader) {
 
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        outState.putParcelable(STATE_KEY_SORTING_CRITERIA, mSortingCriteria);
+        super.onSaveInstanceState(outState);
     }
 
     private class MovieAdapter extends RecyclerView.Adapter<MovieHolder> {
