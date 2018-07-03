@@ -5,6 +5,7 @@ import android.content.Context;
 import android.net.Uri;
 import android.support.annotation.Nullable;
 import android.support.v4.content.AsyncTaskLoader;
+import android.text.TextUtils;
 import android.util.Log;
 
 import org.json.JSONArray;
@@ -145,7 +146,7 @@ public class TMDB {
             for (int i = 0; i < genreArray.length(); ++i) {
                 genres.add(genreArray.optJSONObject(i).optString(TMDB.JSON_KEY_GENRE_NAME));
             }
-            mv.put(MovieProviderContract.MovieEntry.COLUMN_GENRES, String.join(", ", genres));
+            mv.put(MovieProviderContract.MovieEntry.COLUMN_GENRES, TextUtils.join(", ", genres));
         }
         mv.put(MovieProviderContract.MovieEntry.COLUMN_TITLE, jo.optString(TMDB.JSON_KEY_TITLE));
         mv.put(MovieProviderContract.MovieEntry.COLUMN_OVERVIEW, jo.optString(TMDB.JSON_KEY_OVERVIEW));

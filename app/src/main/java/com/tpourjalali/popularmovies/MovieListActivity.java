@@ -2,9 +2,9 @@ package com.tpourjalali.popularmovies;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.PersistableBundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityOptionsCompat;
@@ -31,11 +31,14 @@ public class MovieListActivity extends AppCompatActivity  implements LoaderManag
     public static final int LOAD_POPULAR_MOVIE_LIST = 10;
     private static final String ARG_SORT_BY = "sort by";
     private static final String TAG = "MovieListActivity";
+    private static final int REQUEST_MOVIE_DETAIL = 100;
     private static final String STATE_KEY_SORTING_CRITERIA = "sort_criteria";
-    private String TMDB_API_KEY_V3;
     private RecyclerView mRecyclerView;
     private MovieAdapter mAdapter;
     private Uri mSortingCriteria = MovieProviderContract.MovieEntry.POPULAR_MOVIES_URI;
+
+    public static final String RESULT_EXTRA_MOVIE_ID = "movie_id";
+    public static final String RESULT_EXTRA_FAVORITE = "favorite";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,7 +48,7 @@ public class MovieListActivity extends AppCompatActivity  implements LoaderManag
             if(sortc != null)
                 setSortingCriteria(sortc);
         }
-        TMDB_API_KEY_V3 = getString(R.string.tmdb_api_key_v3);
+        Log.d(TAG, "onCreate");
         setContentView(R.layout.activity_movie_list);
         mRecyclerView = findViewById(R.id.recycler_view);
         mAdapter = new MovieAdapter();
@@ -66,12 +69,14 @@ public class MovieListActivity extends AppCompatActivity  implements LoaderManag
                 }
             }
         });
+        reloadMovies();
+
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        reloadMovies();
+        Log.d(TAG, "onResume");
     }
     private void reloadMovies(){
 //        Bundle args= new Bundle();
@@ -143,6 +148,29 @@ public class MovieListActivity extends AppCompatActivity  implements LoaderManag
     }
 
     @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if(requestCode == REQUEST_MOVIE_DETAIL){
+            if(resultCode == RESULT_OK ){
+                if(data != null && data.hasExtra(RESULT_EXTRA_MOVIE_ID) && data.hasExtra(RESULT_EXTRA_FAVORITE)){
+                    long movie_id = data.getLongExtra(RESULT_EXTRA_MOVIE_ID, 0);
+                    boolean favorite = data.getBooleanExtra(RESULT_EXTRA_FAVORITE, false);
+                    int i = -1;
+                    for(Movie movie: mAdapter.mMovies){
+                        ++i;
+                        if (movie.getId() == movie_id){
+                            movie.setFavorite(favorite);
+                            break;
+                        }
+                    }
+                    mAdapter.notifyItemChanged(i);
+                }
+            }
+        } else {
+            super.onActivityResult(requestCode, resultCode, data);
+        }
+    }
+
+    @Override
     public void onLoaderReset(@NonNull Loader loader) {
 
     }
@@ -187,14 +215,15 @@ public class MovieListActivity extends AppCompatActivity  implements LoaderManag
         private ImageView mSharedView;
         @Override
         public void onClick(View v) {
+            //NOTE: I use startActivityForResult instead of startActivity because I want to update the favorite status of a movie after the app returns from the detail activity.
             Intent intent = MovieDetailActivity.newIntent(MovieListActivity.this, mMovie, mMovie.getTmdbId());
             if(mSharedView != null) {
                 ActivityOptionsCompat options =
                         ActivityOptionsCompat.makeSceneTransitionAnimation(MovieListActivity.this,
                                 mSharedView, getString(R.string.transition_name_movie_poster));
-                startActivity(intent, options.toBundle());
+                startActivityForResult(intent, REQUEST_MOVIE_DETAIL, options.toBundle());
             } else {
-                startActivity(intent);
+                startActivityForResult(intent, REQUEST_MOVIE_DETAIL);
             }
         }
         public void setSharedView(ImageView iv){
@@ -218,6 +247,7 @@ public class MovieListActivity extends AppCompatActivity  implements LoaderManag
     }
 
 }
+
 class MovieHolder extends RecyclerView.ViewHolder{
     private static final String TAG = "MovieHolder";
     private ImageView mHeartIv;
@@ -240,18 +270,31 @@ class MovieHolder extends RecyclerView.ViewHolder{
     }
 
     public void bind(Movie movie) {
-        mMovie = movie;
+        if(mMovie != null && mMovie.getId() == movie.getId()){
+            Log.d(TAG, "efficient binding");
+            //same movie, we do not need to do most of the work.  Just check to see if movie's favorite status has changed.
+            if(mMovie.isFavorite() != movie.isFavorite()){
+                mMovie.setFavorite(movie.isFavorite());
+                drawFavorite();
+            }
+        } else {
+            Log.d(TAG, "inefficient binding");
+            mMovie = movie;
+            drawFavorite();
+            mPosterClickListener.setMovie(mMovie);
+            mFavoriteClickListener.setMovie(mMovie);
+            Log.d(TAG, "url: " + mMovie.getFullImagePath(TMDB.API_POSTER_SIZE_ORIGINAL, null));
+            Glide.with(itemView.getContext())
+                    .load(mMovie.getFullImagePath(TMDB.API_POSTER_SIZE_ORIGINAL, null))
+//                .placeholder(R.drawable.ic_poster_placeholder)
+                    .into(mPosterIv);
+        }
+    }
+    private void drawFavorite(){
         if(mMovie.isFavorite()){
             mHeartIv.setImageLevel(1);
         } else {
             mHeartIv.setImageLevel(0);
         }
-        mPosterClickListener.setMovie(mMovie);
-        mFavoriteClickListener.setMovie(mMovie);
-        Log.d(TAG, "url: "+ mMovie.getFullImagePath(TMDB.API_POSTER_SIZE_ORIGINAL, null));
-        Glide.with(itemView.getContext())
-                .load(mMovie.getFullImagePath(TMDB.API_POSTER_SIZE_ORIGINAL, null))
-//                .placeholder(R.drawable.ic_poster_placeholder)
-                .into(mPosterIv);
     }
 }

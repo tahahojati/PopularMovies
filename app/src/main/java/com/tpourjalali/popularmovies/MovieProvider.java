@@ -106,10 +106,14 @@ public class MovieProvider extends ContentProvider {
         switch (sUriMatcher.match(uri)){
             case CODE_POPULAR_MOVIES:
                 movieList = TMDB.downloadPopularMovieList();
+                if(movieList == null)
+                    return null;
                 applyFavoriteMoviesInMovieList(movieList);
                 return cursorFromMovieList(movieList);
             case CODE_TOPRATED_MOVIES:
                 movieList = TMDB.downloadTopRatedMovieList();
+                if(movieList==null)
+                    return null;
                 applyFavoriteMoviesInMovieList(movieList);
                 return cursorFromMovieList(movieList);
             case CODE_FAVORITE_MOVIE:
@@ -143,6 +147,8 @@ public class MovieProvider extends ContentProvider {
                 Cursor reviewCursor = db.query(MovieProviderContract.ReviewEntry.TABLE_NAME, null, MovieProviderContract.ReviewEntry.COLUMN_MOVIE_ID + "=?", new String[]{Long.toString(movie_id)}, null, null, null);
                 if(reviewCursor.getCount() == 0){
                     reviewList = TMDB.downloadMovieReviewList(movie_id);
+                    if(reviewList == null)
+                        return null;
                     return cursorFromReviewList(reviewList);
                 } else {
                     return reviewCursor;
@@ -154,6 +160,8 @@ public class MovieProvider extends ContentProvider {
                 Cursor videoCursor = db.query(MovieProviderContract.VideoEntry.TABLE_NAME, null, MovieProviderContract.VideoEntry.COLUMN_MOVIE_ID + "=?", new String[]{Long.toString(movie_id)}, null, null, null);
                 if(videoCursor.getCount() == 0){
                     videoList = TMDB.downloadMovieVideoList(movie_id);
+                    if(videoList == null)
+                        return null;
                     return cursorFromVideoList(videoList);
                 } else {
                     return videoCursor;

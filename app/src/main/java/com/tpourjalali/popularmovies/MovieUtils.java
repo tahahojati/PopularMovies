@@ -57,6 +57,8 @@ final public class MovieUtils {
 //                else return TMDB.downloadPopularMovieList();
                 ContentResolver cr = context.getContentResolver();
                 Cursor movieCursor = cr.query(uri, null, null, null, null);
+                if(movieCursor == null)
+                    return null;
                 MovieProviderContract.MovieEntry.MovieCursorWrapper wrapper = new MovieProviderContract.MovieEntry.MovieCursorWrapper(movieCursor);
                 ArrayList<Movie> movieList = new ArrayList<>(wrapper.getCount());
                 wrapper.addMoviesToList(movieList);
@@ -72,6 +74,8 @@ final public class MovieUtils {
                 ContentResolver cr = context.getContentResolver();
                 Uri uri = MovieProviderContract.MovieEntry.SINGLE_MOVIE_URI.buildUpon().appendPath(Long.toString(movie_id)).build();
                 Cursor movieCursor = cr.query(uri, null, null, null, null);
+                if(movieCursor == null)
+                    return null;
                 MovieProviderContract.MovieEntry.MovieCursorWrapper wrapper = new MovieProviderContract.MovieEntry.MovieCursorWrapper(movieCursor);
                 Movie movie = wrapper.getMovie();
                 wrapper.close();
@@ -87,6 +91,9 @@ final public class MovieUtils {
                 Uri reviewUri = MovieProviderContract.ReviewEntry.CONTENT_URI
                         .buildUpon().appendPath(Long.toString(movie_id)).build();
                 Cursor reviewCursor = cr.query(reviewUri, null, null, null,null);
+                if(reviewCursor == null){
+                    return null;
+                }
                 List<MovieReview> list = new ArrayList<>(reviewCursor.getCount());
                 new MovieProviderContract.ReviewEntry.ReviewCursorWrapper(reviewCursor).addMovieReviewsToList(list);
                 reviewCursor.close();
@@ -99,9 +106,11 @@ final public class MovieUtils {
             @Override
             public List<MovieVideo> loadInBackground() {
                     ContentResolver cr = context.getContentResolver();
-                    Uri reviewUri = MovieProviderContract.VideoEntry.CONTENT_URI
+                    Uri videoUri = MovieProviderContract.VideoEntry.CONTENT_URI
                             .buildUpon().appendPath(Long.toString(movie_id)).build();
-                    Cursor videoCursor = cr.query(reviewUri, null, null, null,null);
+                    Cursor videoCursor = cr.query(videoUri, null, null, null,null);
+                    if(videoCursor == null)
+                        return null;
                     List<MovieVideo> list = new ArrayList<>(videoCursor.getCount());
                     new MovieProviderContract.VideoEntry.VideoCursorWrapper(videoCursor).addMovieVideosToList(list);
                     videoCursor.close();

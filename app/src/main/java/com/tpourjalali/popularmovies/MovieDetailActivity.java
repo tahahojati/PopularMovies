@@ -51,6 +51,7 @@ public class MovieDetailActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Log.d(TAG, "onCreate");
         setContentView(R.layout.activity_movie_detail);
         Intent intent = getIntent();
         mMovie = (Movie)intent.getSerializableExtra(INTENT_KEY_MOVIE);
@@ -64,6 +65,14 @@ public class MovieDetailActivity extends AppCompatActivity {
         lm.restartLoader(LOAD_REVIEWS, null, createMovieReviewLoaderCallBacks()).forceLoad();
         initViewFields();
         populateUI();
+    }
+
+    @Override
+    protected void onDestroy() {
+        Log.d(TAG, "OnDestroy");
+        mTrailersRV.setAdapter(null);
+        mReviewsVP.setAdapter(null);
+        super.onDestroy();
     }
 
     @Override
@@ -91,7 +100,7 @@ public class MovieDetailActivity extends AppCompatActivity {
         mMovieVoteCountTV = findViewById(R.id.movie_vote_count_tv);
         mTrailersRV.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
         mTrailersRV.setAdapter(createTrailersAdapter());
-        mReviewsVP.setAdapter(createReviewsAdapter());
+        mReviewsVP.setAdapter(createReviewsAdapter(mMovie.getReviews()));
         mReviewsVP.setPageMargin(30);
 
         mFavoriteIV.setOnClickListener((v) -> {
@@ -105,16 +114,25 @@ public class MovieDetailActivity extends AppCompatActivity {
                         null
                 );
             });
+            Intent res = new Intent();
+            res.putExtra(MovieListActivity.RESULT_EXTRA_MOVIE_ID, mMovieId);
             if(mMovie.isFavorite()){
                 mFavoriteIV.setImageLevel(1);
+                res.putExtra(MovieListActivity.RESULT_EXTRA_FAVORITE, true);
             } else {
                 mFavoriteIV.setImageLevel(0);
+                res.putExtra(MovieListActivity.RESULT_EXTRA_FAVORITE, false);
             }
+            setResult(RESULT_OK, res);
         });
     }
 
-    private PagerAdapter createReviewsAdapter() {
+    private PagerAdapter createReviewsAdapter(final List<MovieReview> reviews) {
         return new PagerAdapter() {
+            private List<MovieReview> mReviews;
+            public void setReviews(List<MovieReview> a_reviews){
+                mReviews = a_reviews;
+            }
             @Override
             public void destroyItem(@NonNull ViewGroup container, int position, @NonNull Object object) {
                 container.removeView((View)object);
@@ -124,7 +142,7 @@ public class MovieDetailActivity extends AppCompatActivity {
             @Override
             public Object instantiateItem(@NonNull ViewGroup container, int position) {
                 View v = getLayoutInflater().inflate(R.layout.movie_review_list_item, container, false);
-                MovieReview mr = mMovie.getReviews().get(position);
+                MovieReview mr = mReviews.get(position);
                 ((TextView)v.findViewById(R.id.review_author_tv)).setText(
                         getString(R.string.movie_detail_review_author, mr.getAuthor()));
                 ((TextView)v.findViewById(R.id.review_content_tv)).setText(mr.getContent());
@@ -134,7 +152,7 @@ public class MovieDetailActivity extends AppCompatActivity {
 
             @Override
             public int getCount() {
-                return mMovie.getReviews().size();
+                return mReviews.size();
             }
 
             @Override
@@ -204,6 +222,7 @@ public class MovieDetailActivity extends AppCompatActivity {
     }
 
     private void reloadMovieReviews(){
+        mReviewsVP.getAdapter().set
         mReviewsVP.getAdapter().notifyDataSetChanged();
     }
 
