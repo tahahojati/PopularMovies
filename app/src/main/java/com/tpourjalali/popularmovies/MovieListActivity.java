@@ -3,6 +3,8 @@ package com.tpourjalali.popularmovies;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -35,6 +37,7 @@ public class MovieListActivity extends AppCompatActivity  implements LoaderManag
     private static final String STATE_KEY_SORTING_CRITERIA = "sort_criteria";
     private RecyclerView mRecyclerView;
     private MovieAdapter mAdapter;
+    private boolean mOffline = false;
     private Uri mSortingCriteria = MovieProviderContract.MovieEntry.POPULAR_MOVIES_URI;
 
     public static final String RESULT_EXTRA_MOVIE_ID = "movie_id";
@@ -43,7 +46,15 @@ public class MovieListActivity extends AppCompatActivity  implements LoaderManag
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if(savedInstanceState != null){
+        //check if we are offline.
+        ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo info = cm.getActiveNetworkInfo();
+        if(info == null || !info.isConnectedOrConnecting())
+            mOffline = true;
+        if(mOffline){
+            setSortingCriteria(MovieProviderContract.MovieEntry.FAVORITE_MOVIES_URI);
+        }
+        else if(savedInstanceState != null){
             Uri sortc = savedInstanceState.getParcelable(STATE_KEY_SORTING_CRITERIA);
             if(sortc != null)
                 setSortingCriteria(sortc);
@@ -89,6 +100,10 @@ public class MovieListActivity extends AppCompatActivity  implements LoaderManag
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater mi = getMenuInflater();
         mi.inflate(R.menu.movie_list_menu, menu);
+        if(mOffline){
+            menu.findItem(R.id.menu_sort_rating).setEnabled(false);
+            menu.findItem(R.id.menu_sort_popularity).setEnabled(false);
+        }
         if (mSortingCriteria.equals(MovieProviderContract.MovieEntry.TOPRATED_MOVIES_URI)) {
             menu.findItem(R.id.menu_sort_rating).setChecked(true);
         }
@@ -162,7 +177,13 @@ public class MovieListActivity extends AppCompatActivity  implements LoaderManag
                             break;
                         }
                     }
-                    mAdapter.notifyItemChanged(i);
+                    if(mSortingCriteria.equals(MovieProviderContract.MovieEntry.FAVORITE_MOVIES_URI)){
+                        //this must mean that we removed a movie from the favorites.
+                        mAdapter.mMovies.remove(i);
+                        mAdapter.notifyItemRemoved(i);
+                    } else {
+                        mAdapter.notifyItemChanged(i);
+                    }
                 }
             }
         } else {

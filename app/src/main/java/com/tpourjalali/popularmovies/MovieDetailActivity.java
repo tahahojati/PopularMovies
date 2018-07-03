@@ -129,10 +129,6 @@ public class MovieDetailActivity extends AppCompatActivity {
 
     private PagerAdapter createReviewsAdapter(final List<MovieReview> reviews) {
         return new PagerAdapter() {
-            private List<MovieReview> mReviews;
-            public void setReviews(List<MovieReview> a_reviews){
-                mReviews = a_reviews;
-            }
             @Override
             public void destroyItem(@NonNull ViewGroup container, int position, @NonNull Object object) {
                 container.removeView((View)object);
@@ -142,7 +138,7 @@ public class MovieDetailActivity extends AppCompatActivity {
             @Override
             public Object instantiateItem(@NonNull ViewGroup container, int position) {
                 View v = getLayoutInflater().inflate(R.layout.movie_review_list_item, container, false);
-                MovieReview mr = mReviews.get(position);
+                MovieReview mr = reviews.get(position);
                 ((TextView)v.findViewById(R.id.review_author_tv)).setText(
                         getString(R.string.movie_detail_review_author, mr.getAuthor()));
                 ((TextView)v.findViewById(R.id.review_content_tv)).setText(mr.getContent());
@@ -152,7 +148,7 @@ public class MovieDetailActivity extends AppCompatActivity {
 
             @Override
             public int getCount() {
-                return mReviews.size();
+                return reviews.size();
             }
 
             @Override
@@ -222,8 +218,7 @@ public class MovieDetailActivity extends AppCompatActivity {
     }
 
     private void reloadMovieReviews(){
-        mReviewsVP.getAdapter().set
-        mReviewsVP.getAdapter().notifyDataSetChanged();
+        mReviewsVP.setAdapter(createReviewsAdapter(mMovie.getReviews()));
     }
 
     private void reloadMovieVideos(){
