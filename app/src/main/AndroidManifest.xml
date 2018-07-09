@@ -24,8 +24,7 @@
         </activity>
         <activity
             android:name=".MovieDetailActivity"
-            android:parentActivityName=".MovieListActivity"
-            android:screenOrientation="landscape" />
+            android:parentActivityName=".MovieListActivity" />
 
         <provider
             android:name=".MovieProvider"

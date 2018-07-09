@@ -99,7 +99,7 @@ public class MovieDetailActivity extends AppCompatActivity {
         mReviewsVP = findViewById(R.id.movie_reviews_vp);
         mMovieVoteCountTV = findViewById(R.id.movie_vote_count_tv);
         mTrailersRV.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
-        mTrailersRV.setAdapter(createTrailersAdapter());
+        mTrailersRV.setAdapter(createTrailersAdapter(mMovie.getVideos()));
         mReviewsVP.setAdapter(createReviewsAdapter(mMovie.getReviews()));
         mReviewsVP.setPageMargin(30);
 
@@ -158,7 +158,7 @@ public class MovieDetailActivity extends AppCompatActivity {
         };
     }
 
-    private RecyclerView.Adapter<TrailerHolder> createTrailersAdapter() {
+    private RecyclerView.Adapter<TrailerHolder> createTrailersAdapter(final List<MovieVideo> videos) {
         return new RecyclerView.Adapter<TrailerHolder>() {
             @NonNull
             @Override
@@ -170,12 +170,12 @@ public class MovieDetailActivity extends AppCompatActivity {
 
             @Override
             public void onBindViewHolder(@NonNull TrailerHolder holder, int position) {
-                holder.bindVideo(mMovie.getVideos().get(position));
+                holder.bindVideo(videos.get(position));
             }
 
             @Override
             public int getItemCount() {
-                return mMovie.getVideos().size();
+                return videos.size();
             }
         };
     }
@@ -222,7 +222,7 @@ public class MovieDetailActivity extends AppCompatActivity {
     }
 
     private void reloadMovieVideos(){
-        mTrailersRV.getAdapter().notifyDataSetChanged();
+        mTrailersRV.setAdapter(createTrailersAdapter(mMovie.getVideos()));
     }
 
 
