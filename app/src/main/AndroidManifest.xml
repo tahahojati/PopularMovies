@@ -15,8 +15,7 @@
         android:theme="@style/AppTheme">
         <activity
             android:name=".MovieListActivity"
-            android:launchMode="singleTop"
-            android:screenOrientation="portrait">
+            android:launchMode="singleTop">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -26,13 +25,13 @@
         <activity
             android:name=".MovieDetailActivity"
             android:parentActivityName=".MovieListActivity"
-            android:screenOrientation="portrait" />
+            android:screenOrientation="landscape" />
 
         <provider
             android:name=".MovieProvider"
             android:authorities="com.tpourjalali.popularmovies"
             android:enabled="true"
-            android:exported="true"></provider>
+            android:exported="true" />
     </application>
 
 </manifest>

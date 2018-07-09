@@ -1,12 +1,17 @@
 package com.tpourjalali.popularmovies;
 
+import android.app.usage.NetworkStatsManager;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.Browser;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityOptionsCompat;
@@ -23,6 +28,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 
@@ -35,7 +41,9 @@ public class MovieListActivity extends AppCompatActivity  implements LoaderManag
     private static final String TAG = "MovieListActivity";
     private static final int REQUEST_MOVIE_DETAIL = 100;
     private static final String STATE_KEY_SORTING_CRITERIA = "sort_criteria";
+    private static final String STATE_KEY_OFFLINE = "mOffline";
     private RecyclerView mRecyclerView;
+    private static final IntentFilter NETWORK_INTENT_FILTER = new IntentFilter();
     private MovieAdapter mAdapter;
     private boolean mOffline = false;
     private Uri mSortingCriteria = MovieProviderContract.MovieEntry.POPULAR_MOVIES_URI;
@@ -43,22 +51,24 @@ public class MovieListActivity extends AppCompatActivity  implements LoaderManag
     public static final String RESULT_EXTRA_MOVIE_ID = "movie_id";
     public static final String RESULT_EXTRA_FAVORITE = "favorite";
 
+    static {
+        NETWORK_INTENT_FILTER.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
+    }
+
+    private BroadcastReceiver mNetworkReceiver = new NetworkReceiver();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        //check if we are offline.
-        ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo info = cm.getActiveNetworkInfo();
-        if(info == null || !info.isConnectedOrConnecting())
-            mOffline = true;
-        if(mOffline){
-            setSortingCriteria(MovieProviderContract.MovieEntry.FAVORITE_MOVIES_URI);
-        }
-        else if(savedInstanceState != null){
+        if (savedInstanceState != null) {
             Uri sortc = savedInstanceState.getParcelable(STATE_KEY_SORTING_CRITERIA);
             if(sortc != null)
-                setSortingCriteria(sortc);
+                mSortingCriteria = sortc;
+            mOffline = savedInstanceState.getBoolean(STATE_KEY_OFFLINE, false);
         }
+        //check if we are offline.
+        checkNetwork();
+
         Log.d(TAG, "onCreate");
         setContentView(R.layout.activity_movie_list);
         mRecyclerView = findViewById(R.id.recycler_view);
@@ -69,14 +79,29 @@ public class MovieListActivity extends AppCompatActivity  implements LoaderManag
         glm.setSpanSizeLookup(new GridLayoutManager.SpanSizeLookup() {
             @Override
             public int getSpanSize(int position) {
-                switch (position){
-                    case 0:
-                        return 6;
-                    case 1:
-                    case 2:
-                        return 3;
+                switch (getResources().getConfiguration().orientation) {
+                    case Configuration.ORIENTATION_LANDSCAPE:
+                        switch (position) {
+                            case 0:
+                            case 1:
+                                return 3;
+                            case 2:
+                            case 3:
+                            case 4:
+                                return 2;
+                            default:
+                                return 1;
+                        }
                     default:
-                        return 2;
+                        switch (position) {
+                            case 0:
+                                return 6;
+                            case 1:
+                            case 2:
+                                return 3;
+                            default:
+                                return 2;
+                        }
                 }
             }
         });
@@ -85,10 +110,51 @@ public class MovieListActivity extends AppCompatActivity  implements LoaderManag
     }
 
     @Override
+    protected void onStart() {
+        super.onStart();
+        Log.d(TAG, "onStart was called");
+    }
+
+    @Override
+    protected void onRestart() {
+        super.onRestart();
+        Log.d(TAG, "onRestart was called");
+        checkNetwork(); // automatically does the right thing.
+    }
+
+    private void registerNetworkBroadcastReceiver() {
+
+    }
+
+    private void checkNetwork() {
+        ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo info = cm.getActiveNetworkInfo();
+        if (info == null || !info.isConnectedOrConnecting()) {
+            setNetworkStatus(true);
+        } else {
+            setNetworkStatus(false);
+        }
+    }
+
+    @Override
     protected void onResume() {
         super.onResume();
-        Log.d(TAG, "onResume");
+        Log.d(TAG, "onResume was called");
+        registerReceiver(mNetworkReceiver, NETWORK_INTENT_FILTER);
     }
+
+    @Override
+    protected void onPause() {
+        unregisterReceiver(mNetworkReceiver);
+        super.onPause();
+    }
+
+    @Override
+    protected void onStop() {
+        Log.d(TAG, "onStop was called");
+        super.onStop();
+    }
+
     private void reloadMovies(){
 //        Bundle args= new Bundle();
 //        args.putParcelable(ARG_SORT_BY, mSortingCriteria);
@@ -164,6 +230,7 @@ public class MovieListActivity extends AppCompatActivity  implements LoaderManag
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        Log.d(TAG, "onActivityResult was called");
         if(requestCode == REQUEST_MOVIE_DETAIL){
             if(resultCode == RESULT_OK ){
                 if(data != null && data.hasExtra(RESULT_EXTRA_MOVIE_ID) && data.hasExtra(RESULT_EXTRA_FAVORITE)){
@@ -199,7 +266,22 @@ public class MovieListActivity extends AppCompatActivity  implements LoaderManag
     @Override
     public void onSaveInstanceState(Bundle outState) {
         outState.putParcelable(STATE_KEY_SORTING_CRITERIA, mSortingCriteria);
+        outState.putBoolean(STATE_KEY_OFFLINE, mOffline);
         super.onSaveInstanceState(outState);
+    }
+
+    private void setNetworkStatus(boolean offline) {
+        if (offline == mOffline) return;
+        mOffline = offline;
+        if (mOffline) {
+            setSortingCriteria(MovieProviderContract.MovieEntry.FAVORITE_MOVIES_URI);
+            Toast toast = Toast.makeText(this, R.string.offline_toast_msg, Toast.LENGTH_SHORT);
+            toast.show();
+        } else {
+            Toast toast = Toast.makeText(this, R.string.online_toast_msg, Toast.LENGTH_SHORT);
+            toast.show();
+        }
+        invalidateOptionsMenu();
     }
 
     private class MovieAdapter extends RecyclerView.Adapter<MovieHolder> {
@@ -264,6 +346,13 @@ public class MovieListActivity extends AppCompatActivity  implements LoaderManag
         }
         public void setMovie(Movie movie) {
             mMovie = movie;
+        }
+    }
+
+    private class NetworkReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            checkNetwork();
         }
     }
 

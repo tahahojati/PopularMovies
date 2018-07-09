@@ -8,4 +8,6 @@
     <string name="movie_detail_section_header_reviews">Reviews</string>
     <string name="movie_detail_review_author">- %s</string>
     <string name="sort_criteria_favorites">Favorites</string>
+    <string name="offline_toast_msg">"Device is offline. \n Only favorite movies can be viewed."</string>
+    <string name="online_toast_msg">Device is online</string>
 </resources>
