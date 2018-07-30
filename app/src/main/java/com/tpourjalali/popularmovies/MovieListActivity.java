@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.graphics.drawable.Drawable;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
@@ -19,6 +20,7 @@ import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
+import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -27,22 +29,31 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.DataSource;
+import com.bumptech.glide.load.engine.GlideException;
+import com.bumptech.glide.request.RequestListener;
+import com.bumptech.glide.request.target.Target;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class MovieListActivity extends AppCompatActivity  implements LoaderManager.LoaderCallbacks<List<Movie>>{
     public static final int LOAD_POPULAR_MOVIE_LIST = 10;
     private static final String ARG_SORT_BY = "sort by";
     private static final String TAG = "MovieListActivity";
     private static final int REQUEST_MOVIE_DETAIL = 100;
+    private AtomicInteger mImagesLoaded = new AtomicInteger(0);
     private static final String STATE_KEY_SORTING_CRITERIA = "sort_criteria";
     private static final String STATE_KEY_OFFLINE = "mOffline";
+    private static final String KEY_SCROLL_POSITION = "scroll";
     private RecyclerView mRecyclerView;
+    private int mScrollPosition = 0 ;
     private static final IntentFilter NETWORK_INTENT_FILTER = new IntentFilter();
     private MovieAdapter mAdapter;
     private boolean mOffline = false;
@@ -65,6 +76,7 @@ public class MovieListActivity extends AppCompatActivity  implements LoaderManag
             if(sortc != null)
                 mSortingCriteria = sortc;
             mOffline = savedInstanceState.getBoolean(STATE_KEY_OFFLINE, false);
+            mScrollPosition = savedInstanceState.getInt(KEY_SCROLL_POSITION, 0);
         }
         //check if we are offline.
         checkNetwork();
@@ -72,10 +84,20 @@ public class MovieListActivity extends AppCompatActivity  implements LoaderManag
         Log.d(TAG, "onCreate");
         setContentView(R.layout.activity_movie_list);
         mRecyclerView = findViewById(R.id.recycler_view);
+        mRecyclerView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                if(mRecyclerView.getLayoutManager().getChildCount() > 0 && mImagesLoaded.get() == 0){
+                    mRecyclerView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                    mRecyclerView.smoothScrollToPosition(mScrollPosition);
+                    Log.d(TAG, "" +mScrollPosition);
+                    mRecyclerView.getLayoutManager().smoothScrollToPosition(mRecyclerView, null, mScrollPosition);
+                }
+            }
+        });
         mAdapter = new MovieAdapter();
         mRecyclerView.setAdapter(mAdapter);
         GridLayoutManager glm = new GridLayoutManager(this, 6);
-        mRecyclerView.setLayoutManager(glm);
         glm.setSpanSizeLookup(new GridLayoutManager.SpanSizeLookup() {
             @Override
             public int getSpanSize(int position) {
@@ -105,6 +127,8 @@ public class MovieListActivity extends AppCompatActivity  implements LoaderManag
                 }
             }
         });
+        glm.onSaveInstanceState();
+        mRecyclerView.setLayoutManager(glm);
         reloadMovies();
 
     }
@@ -211,6 +235,7 @@ public class MovieListActivity extends AppCompatActivity  implements LoaderManag
             return;
         else {
             mSortingCriteria = criteria;
+            mScrollPosition = 0 ;
             reloadMovies();
         }
 
@@ -226,6 +251,7 @@ public class MovieListActivity extends AppCompatActivity  implements LoaderManag
     @Override
     public void onLoadFinished(@NonNull Loader<List<Movie>> loader, List<Movie> data) {
         mAdapter.setMovies(data);
+        mRecyclerView.scrollToPosition(mScrollPosition);
     }
 
     @Override
@@ -267,6 +293,7 @@ public class MovieListActivity extends AppCompatActivity  implements LoaderManag
     public void onSaveInstanceState(Bundle outState) {
         outState.putParcelable(STATE_KEY_SORTING_CRITERIA, mSortingCriteria);
         outState.putBoolean(STATE_KEY_OFFLINE, mOffline);
+        outState.putInt(KEY_SCROLL_POSITION, ((GridLayoutManager)mRecyclerView.getLayoutManager()).findLastCompletelyVisibleItemPosition());
         super.onSaveInstanceState(outState);
     }
 
@@ -306,6 +333,7 @@ public class MovieListActivity extends AppCompatActivity  implements LoaderManag
         @Override
         public void onBindViewHolder(@NonNull MovieHolder holder, int position) {
             holder.bind(mMovies.get(position));
+            mImagesLoaded.incrementAndGet();
         }
 
         @Override
@@ -356,55 +384,70 @@ public class MovieListActivity extends AppCompatActivity  implements LoaderManag
         }
     }
 
-}
+    class MovieHolder extends RecyclerView.ViewHolder{
+        private static final String TAG = "MovieHolder";
+        private ImageView mHeartIv;
+        private ImageView mPosterIv;
+        private Movie mMovie;
+        private Context mContext;
+        private MovieListActivity.PosterClickListener mPosterClickListener;
+        private MovieListActivity.FavoriteClickListener mFavoriteClickListener;
+        public MovieHolder(View itemView, MovieListActivity.PosterClickListener posterListener, MovieListActivity.FavoriteClickListener favoriteListener) {
+            super(itemView);
+            mContext = itemView.getContext();
+            mHeartIv = itemView.findViewById(R.id.heart_iv);
+            mPosterIv = itemView.findViewById(R.id.poster_iv);
+            mPosterIv.setOnClickListener(posterListener);
+            mHeartIv.setOnClickListener(favoriteListener);
+            mFavoriteClickListener = favoriteListener;
+            mPosterClickListener = posterListener;
+            mPosterClickListener.setSharedView(mPosterIv);
+            mPosterClickListener = posterListener;
+        }
 
-class MovieHolder extends RecyclerView.ViewHolder{
-    private static final String TAG = "MovieHolder";
-    private ImageView mHeartIv;
-    private ImageView mPosterIv;
-    private Movie mMovie;
-    private Context mContext;
-    private MovieListActivity.PosterClickListener mPosterClickListener;
-    private MovieListActivity.FavoriteClickListener mFavoriteClickListener;
-    public MovieHolder(View itemView, MovieListActivity.PosterClickListener posterListener, MovieListActivity.FavoriteClickListener favoriteListener) {
-        super(itemView);
-        mContext = itemView.getContext();
-        mHeartIv = itemView.findViewById(R.id.heart_iv);
-        mPosterIv = itemView.findViewById(R.id.poster_iv);
-        mPosterIv.setOnClickListener(posterListener);
-        mHeartIv.setOnClickListener(favoriteListener);
-        mFavoriteClickListener = favoriteListener;
-        mPosterClickListener = posterListener;
-        mPosterClickListener.setSharedView(mPosterIv);
-        mPosterClickListener = posterListener;
-    }
-
-    public void bind(Movie movie) {
-        if(mMovie != null && mMovie.getId() == movie.getId()){
-            Log.d(TAG, "efficient binding");
-            //same movie, we do not need to do most of the work.  Just check to see if movie's favorite status has changed.
-            if(mMovie.isFavorite() != movie.isFavorite()){
-                mMovie.setFavorite(movie.isFavorite());
+        public void bind(Movie movie) {
+            if(mMovie != null && mMovie.getId() == movie.getId()){
+                Log.d(TAG, "efficient binding");
+                //same movie, we do not need to do most of the work.  Just check to see if movie's favorite status has changed.
+                if(mMovie.isFavorite() != movie.isFavorite()){
+                    mMovie.setFavorite(movie.isFavorite());
+                    drawFavorite();
+                }
+            } else {
+                Log.d(TAG, "inefficient binding");
+                mMovie = movie;
                 drawFavorite();
-            }
-        } else {
-            Log.d(TAG, "inefficient binding");
-            mMovie = movie;
-            drawFavorite();
-            mPosterClickListener.setMovie(mMovie);
-            mFavoriteClickListener.setMovie(mMovie);
-            Log.d(TAG, "url: " + mMovie.getFullImagePath(TMDB.API_POSTER_SIZE_ORIGINAL, null));
-            Glide.with(itemView.getContext())
-                    .load(mMovie.getFullImagePath(TMDB.API_POSTER_SIZE_ORIGINAL, null))
+                mPosterClickListener.setMovie(mMovie);
+                mFavoriteClickListener.setMovie(mMovie);
+                Log.d(TAG, "url: " + mMovie.getFullImagePath(TMDB.API_POSTER_SIZE_ORIGINAL, null));
+                Glide.with(itemView.getContext())
+                        .load(mMovie.getFullImagePath(TMDB.API_POSTER_SIZE_ORIGINAL, null))
+                        .listener(new RequestListener<Drawable>() {
+                            @Override
+                            public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
+                                Log.d(TAG, "load failed");
+                                mImagesLoaded.decrementAndGet();
+                                return false;
+                            }
+
+                            @Override
+                            public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
+                                Log.d(TAG, "resource ready");
+                                mImagesLoaded.decrementAndGet();
+                                return false;
+                            }
+                        })
 //                .placeholder(R.drawable.ic_poster_placeholder)
-                    .into(mPosterIv);
+                        .into(mPosterIv);
+            }
         }
-    }
-    private void drawFavorite(){
-        if(mMovie.isFavorite()){
-            mHeartIv.setImageLevel(1);
-        } else {
-            mHeartIv.setImageLevel(0);
+        private void drawFavorite(){
+            if(mMovie.isFavorite()){
+                mHeartIv.setImageLevel(1);
+            } else {
+                mHeartIv.setImageLevel(0);
+            }
         }
     }
 }
+
